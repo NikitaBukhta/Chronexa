@@ -2,8 +2,7 @@
 
 namespace chronexa::activity {
 
-UserActivityModel::UserActivityModel(QObject *parent)
-    : QAbstractListModel(parent) {}
+UserActivityModel::UserActivityModel(QObject *parent) : QAbstractListModel(parent) {}
 
 int UserActivityModel::rowCount(const QModelIndex &parent) const {
   if (parent.isValid()) {

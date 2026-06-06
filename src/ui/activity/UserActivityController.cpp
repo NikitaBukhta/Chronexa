@@ -11,8 +11,7 @@ Q_LOGGING_CATEGORY(lcController, "chronexa.activity.controller")
 
 namespace chronexa::activity {
 
-UserActivityController::UserActivityController(ActivityService *service,
-                                               QObject *parent)
+UserActivityController::UserActivityController(ActivityService *service, QObject *parent)
     : QObject(parent), _service(service) {}
 
 void UserActivityController::clearActivities() {

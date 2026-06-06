@@ -27,8 +27,7 @@ constexpr int kTickIntervalMinutes = 5;
 qint64 msUntilNextBoundary() {
   const QDateTime now = QDateTime::currentDateTime();
   const QTime t = now.time();
-  const int nextMinute =
-      ((t.minute() / kTickIntervalMinutes) + 1) * kTickIntervalMinutes;
+  const int nextMinute = ((t.minute() / kTickIntervalMinutes) + 1) * kTickIntervalMinutes;
   QDateTime next = now;
   next.setTime(QTime(t.hour(), 0));
   next = next.addSecs(nextMinute * 60);
@@ -38,11 +37,10 @@ qint64 msUntilNextBoundary() {
 } // namespace
 
 ActivityService::ActivityService(QObject *parent) : QObject(parent) {
-  _activityProvider = std::make_unique<OSSpecificProvider>();
+  _activityProvider = OSSpecificProvider::instance();
   _activityProvider->start();
   scheduleNextTick();
-  qCInfo(lcActivity) << "ActivityService started, tick interval ="
-                     << kTickIntervalMinutes << "min";
+  qCInfo(lcActivity) << "ActivityService started, tick interval =" << kTickIntervalMinutes << "min";
 }
 
 ActivityService::~ActivityService() {
@@ -69,9 +67,8 @@ void ActivityService::scheduleNextTick() {
 
 void ActivityService::onTick() {
   QList<Activity> activities = _activityProvider->drainEvents();
-  qCInfo(lcActivity) << "Tick at"
-                     << QDateTime::currentDateTime().toString(Qt::ISODate)
-                     << "-- drained" << activities.size() << "activities";
+  qCInfo(lcActivity) << "Tick at" << QDateTime::currentDateTime().toString(Qt::ISODate) << "-- drained"
+                     << activities.size() << "activities";
   emit activityUpdated(std::move(activities));
   scheduleNextTick();
 }

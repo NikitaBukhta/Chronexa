@@ -17,8 +17,7 @@ Q_LOGGING_CATEGORY(lcInit, "chronexa.core.init")
 namespace chronexa::core {
 
 AppInitializer::AppInitializer(QGuiApplication &app, QObject *parent)
-    : QObject(parent), _app(app),
-      _engine(std::make_unique<QQmlApplicationEngine>()) {}
+    : QObject(parent), _app(app), _engine(std::make_unique<QQmlApplicationEngine>()) {}
 
 AppInitializer::~AppInitializer() = default;
 
@@ -47,27 +46,23 @@ void AppInitializer::init() {
 void AppInitializer::buildActivityModule() {
   _activityService = std::make_unique<activity::ActivityService>();
   _activityModel = std::make_unique<activity::UserActivityModel>();
-  _activityController = std::make_unique<activity::UserActivityController>(
-      _activityService.get());
+  _activityController = std::make_unique<activity::UserActivityController>(_activityService.get());
 
-  QObject::connect(
-      _activityService.get(), &activity::ActivityService::activityUpdated,
-      _activityModel.get(), &activity::UserActivityModel::onActivitiesReceived);
-  QObject::connect(_activityService.get(), &activity::ActivityService::cleared,
-                   _activityModel.get(), &activity::UserActivityModel::clear);
+  QObject::connect(_activityService.get(), &activity::ActivityService::activityUpdated, _activityModel.get(),
+                   &activity::UserActivityModel::onActivitiesReceived);
+  QObject::connect(_activityService.get(), &activity::ActivityService::cleared, _activityModel.get(),
+                   &activity::UserActivityModel::clear);
 
   qCInfo(lcInit) << "Activity module wired";
 }
 
 void AppInitializer::registerQmlTypes() {
-  _engine->rootContext()->setContextProperty("activityModel",
-                                             _activityModel.get());
-  _engine->rootContext()->setContextProperty("activityController",
-                                             _activityController.get());
+  _engine->rootContext()->setContextProperty("activityModel", _activityModel.get());
+  _engine->rootContext()->setContextProperty("activityController", _activityController.get());
 
   QObject::connect(
-      _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app,
-      []() { QCoreApplication::exit(-1); }, Qt::QueuedConnection);
+      _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app, []() { QCoreApplication::exit(-1); },
+      Qt::QueuedConnection);
 
   _engine->loadFromModule("Chronexa", "Main");
 

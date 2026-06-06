@@ -22,11 +22,10 @@ std::unique_ptr<chronexa::core::FileLogger> g_logger;
 namespace chronexa::core {
 
 QString AppEnvironment::ensureDataDir() {
-  QString path =
-      QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+  QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
   QDir dir(path);
   dir.cdUp();
-  path = dir.absoluteFilePath("BeeLibrary");
+  path = dir.absoluteFilePath("Chronexa");
 
   QDir().mkpath(path);
   return path;
@@ -37,11 +36,10 @@ QString AppEnvironment::dataPath() {
   return path;
 }
 
-QString AppEnvironment::databasePath() { return dataPath() + "/beelibrary.db"; }
+QString AppEnvironment::databasePath() { return dataPath() + "/chronexa.db"; }
 
 QString AppEnvironment::logFilePath() {
-  const QString timestamp =
-      QDateTime::currentDateTime().toString("dd.MM.yyyy-hh.mm.ss");
+  const QString timestamp = QDateTime::currentDateTime().toString("dd.MM.yyyy-hh.mm.ss");
   return dataPath() + "/log_" + timestamp + ".log";
 }
 
@@ -56,8 +54,7 @@ void AppEnvironment::cleanupOldLogs(int keepDays) {
   const QDir dir(dataPath());
   const QDateTime cutoff = QDateTime::currentDateTime().addDays(-keepDays);
 
-  const auto entries =
-      dir.entryInfoList({"log_*.log", "log_*.log.*"}, QDir::Files, QDir::Time);
+  const auto entries = dir.entryInfoList({"log_*.log", "log_*.log.*"}, QDir::Files, QDir::Time);
   for (const QFileInfo &info : entries) {
     if (info.lastModified() < cutoff) {
       if (QFile::remove(info.absoluteFilePath()))

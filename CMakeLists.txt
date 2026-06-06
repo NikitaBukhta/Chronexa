@@ -9,7 +9,7 @@ project(Chronexa VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Quick Test)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -25,11 +25,18 @@ qt_add_executable(Chronexa
 
     src/domain/activity/Activity.hpp
     src/domain/activity/Activity.cpp
+    src/domain/activity/ActivityCollector.hpp
+    src/domain/activity/ActivityCollector.cpp
 
     src/application/activity/ActivityService.hpp
     src/application/activity/ActivityService.cpp
 
     src/infrastructure/activity/IUserActivityProvider.hpp
+    src/infrastructure/activity/Win32Raii.hpp
+    src/infrastructure/activity/AppInfoParser.hpp
+    src/infrastructure/activity/AppInfoParser.cpp
+    src/infrastructure/activity/BrowserInfoParser.hpp
+    src/infrastructure/activity/BrowserInfoParser.cpp
     src/infrastructure/activity/WindowsActivityProvider.hpp
     src/infrastructure/activity/WindowsActivityProvider.cpp
 
@@ -44,6 +51,11 @@ target_include_directories(Chronexa PRIVATE src)
 target_compile_definitions(Chronexa PRIVATE QT_MESSAGELOGCONTEXT)
 
 target_link_libraries(Chronexa PRIVATE Qt6::Quick)
+
+if(WIN32)
+    # version.lib for GetFileVersionInfoW (app metadata in AppInfoParser)
+    target_link_libraries(Chronexa PRIVATE version)
+endif()
 
 file(GLOB_RECURSE QML_FILES CONFIGURE_DEPENDS src/ui/qml/*.qml)
 
@@ -104,6 +116,22 @@ Qml2Imports = Qt6/qml
         VERBATIM
     )
 endif()
+
+# --- Tests --------------------------------------------------------------
+# The domain layer is platform-free and time-deterministic (all timestamps
+# are passed in), so it is tested without any Win32 dependency.
+enable_testing()
+
+qt_add_executable(tst_ActivityCollector
+    tests/activity/tst_ActivityCollector.cpp
+    src/domain/activity/Activity.hpp
+    src/domain/activity/Activity.cpp
+    src/domain/activity/ActivityCollector.hpp
+    src/domain/activity/ActivityCollector.cpp
+)
+target_include_directories(tst_ActivityCollector PRIVATE src)
+target_link_libraries(tst_ActivityCollector PRIVATE Qt6::Test)
+add_test(NAME tst_ActivityCollector COMMAND tst_ActivityCollector)
 
 include(GNUInstallDirs)
 install(TARGETS Chronexa

@@ -61,8 +61,7 @@ QString parseShortFunctionName(const char *pretty) {
 
 FileLogger *FileLogger::s_instance = nullptr;
 
-FileLogger::FileLogger(QString filePath)
-    : _file(filePath), _filePath(std::move(filePath)) {
+FileLogger::FileLogger(QString filePath) : _file(filePath), _filePath(std::move(filePath)) {
   assert(s_instance == nullptr && "FileLogger is a singleton");
 
   if (!_file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
@@ -129,12 +128,10 @@ void FileLogger::rotate() {
   _file.flush();
   _file.close();
 
-  QFile::remove(_filePath + QStringLiteral(".") +
-                QString::number(kMaxRotatedFiles));
+  QFile::remove(_filePath + QStringLiteral(".") + QString::number(kMaxRotatedFiles));
   for (int i = kMaxRotatedFiles - 1; i >= 1; --i) {
     const QString src = _filePath + QStringLiteral(".") + QString::number(i);
-    const QString dst =
-        _filePath + QStringLiteral(".") + QString::number(i + 1);
+    const QString dst = _filePath + QStringLiteral(".") + QString::number(i + 1);
     if (QFile::exists(src)) {
       QFile::rename(src, dst);
     }
@@ -143,8 +140,7 @@ void FileLogger::rotate() {
 
   _file.setFileName(_filePath);
   if (!_file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
-    std::cerr << "FileLogger: failed to reopen log after rotation: "
-              << _filePath.toLocal8Bit().constData() << ": "
+    std::cerr << "FileLogger: failed to reopen log after rotation: " << _filePath.toLocal8Bit().constData() << ": "
               << _file.errorString().toLocal8Bit().constData() << '\n';
   }
 }
@@ -165,10 +161,7 @@ void FileLogger::writerLoop() {
   while (true) {
     {
       std::unique_lock lock(_queueMutex);
-      _queueCv.wait(lock, [this] {
-        return !_queue.empty() ||
-               _stopRequested.load(std::memory_order_acquire);
-      });
+      _queueCv.wait(lock, [this] { return !_queue.empty() || _stopRequested.load(std::memory_order_acquire); });
       local.swap(_queue);
     }
 
@@ -190,9 +183,7 @@ void FileLogger::writerLoop() {
   }
 }
 
-void FileLogger::messageHandler(QtMsgType type,
-                                const QMessageLogContext &context,
-                                const QString &msg) {
+void FileLogger::messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
   FileLogger *self = s_instance;
   if (!self) {
     return;
@@ -217,15 +208,12 @@ void FileLogger::messageHandler(QtMsgType type,
     break;
   }
 
-  const QString timestamp =
-      QDateTime::currentDateTime().toString(Qt::ISODateWithMs);
+  const QString timestamp = QDateTime::currentDateTime().toString(Qt::ISODateWithMs);
   const QString category = context.category ? context.category : "default";
   const QString function = self->shortFunctionName(context.function);
-  const QString thread =
-      QString::asprintf("%p", static_cast<void *>(QThread::currentThread()));
+  const QString thread = QString::asprintf("%p", static_cast<void *>(QThread::currentThread()));
 
-  QString line = QStringLiteral("%1 [%2] [%3] %4 %5: %6\n")
-                     .arg(timestamp, level, thread, category, function, msg);
+  QString line = QStringLiteral("%1 [%2] [%3] %4 %5: %6\n").arg(timestamp, level, thread, category, function, msg);
 
 #ifdef Q_OS_ANDROID
   android_LogPriority prio = ANDROID_LOG_INFO;

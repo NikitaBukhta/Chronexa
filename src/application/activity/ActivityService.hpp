@@ -4,8 +4,6 @@
 
 #include <QObject>
 
-#include <memory>
-
 namespace chronexa::activity {
 
 class ActivityService : public QObject {
@@ -27,7 +25,8 @@ private slots:
 private:
   void scheduleNextTick();
 
-  std::unique_ptr<IUserActivityProvider> _activityProvider;
+  // Non-owning: the OS-specific provider is a process-wide singleton.
+  IUserActivityProvider *_activityProvider = nullptr;
 };
 
 } // namespace chronexa::activity

@@ -24,8 +24,7 @@ public:
   FileLogger &operator=(const FileLogger &) = delete;
 
   static FileLogger *instance() { return s_instance; }
-  static void messageHandler(QtMsgType type, const QMessageLogContext &context,
-                             const QString &msg);
+  static void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
 private:
   void enqueue(QString line);
