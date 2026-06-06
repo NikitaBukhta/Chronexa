@@ -1,0 +1,5 @@
+{
+  "app_name": "Chronexa",
+  "deps_dir": "~/vcpkg_install_deps",
+  "vcpkg_dir": "~/vcpkg"
+}

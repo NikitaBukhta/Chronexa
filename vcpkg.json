@@ -1,0 +1,30 @@
+{
+  "name": "chronexa",
+  "version-string": "0.1",
+  "dependencies": [
+    "qtbase",
+    "qtdeclarative"
+  ],
+  "overrides": [
+    {
+      "name": "qtbase",
+      "version": "6.10.2"
+    },
+    {
+      "name": "qtdeclarative",
+      "version": "6.10.2"
+    },
+    {
+      "name": "qtshadertools",
+      "version": "6.10.2"
+    },
+    {
+      "name": "qtlanguageserver",
+      "version": "6.10.2"
+    },
+    {
+      "name": "qtsvg",
+      "version": "6.10.2"
+    }
+  ]
+}
