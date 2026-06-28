@@ -27,6 +27,14 @@ everything needed as committed files:
   or `PATH` by hand.
 - **Code style** — `.idea/codeStyles/` enables ClangFormat using the project's
   `.clang-format`, so the IDE formats exactly like the CLI `format` command.
+- **Generated IDE profiles & run configs** — `python bootstrap.py bootstrap`
+  additionally writes a git-ignored **`CMakeUserPresets.json`** (`amd64-debug` /
+  `amd64-release` profiles with the vcpkg toolchain and Qt runtime env resolved
+  to absolute paths) and **`.run/*.run.xml`** shared CLion run configurations:
+  a CMake *Application* config per profile (with the Qt env injected) plus a
+  *"→ script"* shell config that runs `bootstrap.py compile && run`. Both are
+  regenerated on every bootstrap, so they stay in sync with whatever bootstrap
+  provisioned (including any `project.json` `deps_dir`/`vcpkg_dir` override).
 
 A new developer only needs the [prerequisites](#prerequisites) above; opening
 the project does the rest. (Visual Studio reads the same presets; other IDEs can
