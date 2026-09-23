@@ -112,5 +112,3 @@ The `activity` table is `(id, app_name, title, started_on, ended_on)` with
   headers or a Qt tool crashing with `-1073741515`. Check
   `CMAKE_TOOLCHAIN_FILE` and `Z_VCPKG_ROOT_DIR` in each `CMakeCache.txt`;
   both must point at `C:/Users/nikit/vcpkg`.
-- `README.md` still calls the project "BeeLibrary".
-- `src/core/ргш` is a stray empty file from a mistyped command; safe to delete.

@@ -1,6 +1,8 @@
-# BeeLibrary
+# Chronexa
 
-Qt 6.8 QML desktop application for managing a personal book library.
+Qt 6.10 QML desktop application that tracks which application you are actively
+using and shows where the time went, per application and per category
+(rules by application name and window-title regex).
 
 ## Prerequisites
 
@@ -86,8 +88,13 @@ python bootstrap.py run --release
 ## Tests
 
 ```bash
-python bootstrap.py test
+python bootstrap.py test    # unit tests (Qt Test), headless
+python bootstrap.py e2e     # end-to-end: drives the real app and real windows
 ```
+
+`e2e` runs Chronexa with `--profile <tempdir>`, so your own history and settings
+are never touched, but it takes the foreground for about half a minute — do not
+type while it runs.
 
 ## CMake Flags
 
