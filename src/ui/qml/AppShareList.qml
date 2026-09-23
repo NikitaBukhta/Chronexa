@@ -17,8 +17,11 @@ Item {
     readonly property int columnGap: Theme.gap
     readonly property int timeWidth: 78
     readonly property int shareWidth: 46
-    readonly property int barWidth: 132
-    readonly property int nameWidth: Math.max(72, width - edge * 2 - timeWidth - shareWidth - barWidth - columnGap * 3)
+    // The bar only restates the percentage, so it gives way first and the
+    // name keeps room to be read; a fixed bar overflowed narrow cards.
+    readonly property int flexibleWidth: Math.max(0, width - edge * 2 - timeWidth - shareWidth - columnGap * 3)
+    readonly property int barWidth: Math.max(0, Math.min(132, flexibleWidth - 120))
+    readonly property int nameWidth: flexibleWidth - barWidth
 
     readonly property int nameX: edge
     readonly property int timeX: nameX + nameWidth + columnGap
@@ -141,6 +144,7 @@ Item {
             Rectangle {
                 x: root.barX
                 anchors.verticalCenter: parent.verticalCenter
+                visible: root.barWidth >= 24
                 width: root.barWidth
                 height: 8
                 radius: 4

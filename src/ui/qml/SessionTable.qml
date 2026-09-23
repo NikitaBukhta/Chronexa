@@ -13,9 +13,13 @@ Item {
     readonly property int edge: 2
     readonly property int columnGap: Theme.gap
     readonly property int whenWidth: showDay ? 156 : 112
-    readonly property int appWidth: 176
     readonly property int durationWidth: 76
-    readonly property int windowWidth: Math.max(72, width - edge * 2 - whenWidth - appWidth - durationWidth - columnGap * 3)
+    // What is left for the two text columns. They split it rather than taking
+    // fixed widths: in a half-width card at 125% scaling the fixed sum was
+    // wider than the card and pushed Duration past its right edge.
+    readonly property int flexibleWidth: Math.max(0, width - edge * 2 - whenWidth - durationWidth - columnGap * 3)
+    readonly property int appWidth: Math.min(176, Math.round(flexibleWidth / 2))
+    readonly property int windowWidth: Math.max(0, flexibleWidth - appWidth)
 
     readonly property int whenX: edge
     readonly property int appX: whenX + whenWidth + columnGap
@@ -64,6 +68,7 @@ Item {
             text: qsTr("Duration")
             color: Theme.inkFaint
             font.pixelSize: Theme.fontMicro
+            elide: Text.ElideRight
         }
     }
 
