@@ -1,49 +1,13 @@
 #include "application/activity/ActivityQueryService.hpp"
+#include "fakes/Fakes.hpp"
 
 #include <QTest>
 #include <QTimeZone>
 
 using namespace chronexa::activity;
+using namespace chronexa::activity::testing;
 
 namespace {
-
-// Serves canned title totals and records what it was asked for.
-class FakeActivityRepository : public IActivityRepository {
-public:
-  QList<TitleTotal> titles;
-  mutable int titleTotalsCalls = 0;
-  mutable QDateTime lastFrom;
-  mutable QDateTime lastTo;
-
-  bool open() override { return true; }
-  bool insertBatch(const QList<Activity> &) override { return true; }
-  bool clearAll() override { return true; }
-
-  QList<Activity> sessions(const QDateTime &, const QDateTime &,
-                           int) const override {
-    return {};
-  }
-  QList<AppTotal> appTotals(const QDateTime &,
-                            const QDateTime &) const override {
-    return {};
-  }
-  QList<TitleTotal> titleTotals(const QDateTime &from,
-                                const QDateTime &to) const override {
-    ++titleTotalsCalls;
-    lastFrom = from;
-    lastTo = to;
-    return titles;
-  }
-  QList<Interval> intervals(const QDateTime &,
-                            const QDateTime &) const override {
-    return {};
-  }
-  RangeStats stats(const QDateTime &, const QDateTime &) const override {
-    return {};
-  }
-  QPair<QDateTime, QDateTime> bounds() const override { return {}; }
-  QStringList rankedAppNames(int) const override { return {}; }
-};
 
 const QDateTime kFrom(QDate(2026, 9, 1), QTime(0, 0), QTimeZone::UTC);
 const QDateTime kTo(QDate(2026, 9, 2), QTime(0, 0), QTimeZone::UTC);

@@ -44,6 +44,7 @@ public:
 
 private:
   void init();
+  void applyCommandLine();
   void buildSettingsModule();
   void buildActivityModule();
   void applyCategoryRules();

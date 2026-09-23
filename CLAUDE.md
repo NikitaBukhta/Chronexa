@@ -39,7 +39,7 @@ core/  (app-wide services: settings, translations, logging, paths, bootstrap)
 |---|---|---|
 | `src/domain/` | `Activity`, `ActivityStats`, `TrackingSchedule` | Value types + pure logic. No Qt widgets, no DB, no `QObject` unless needed for meta-types. |
 | `src/application/` | `ActivityService` (writes), `ActivityQueryService` (reads) | Orchestration. Talks to `I*` interfaces only, never to `QSql*` or Win32. |
-| `src/infrastructure/` | `SqliteActivityRepository`, `WindowsActivityProvider`, `WindowsAutoStartService` | The only place for SQL, Win32 and registry calls. Each has an `I*.hpp` interface next to it. |
+| `src/infrastructure/` | `SqliteActivityRepository`, `PollingActivityProvider` + `WindowsForegroundProbe`, `WindowsAutoStartService` | The only place for SQL, Win32 and registry calls. Each has an `I*.hpp` interface next to it. Session rules live in the platform-free `PollingActivityProvider`; Win32 only in the probe. |
 | `src/ui/` | `*Controller` (QML-facing façade), `*Model` (`QAbstractListModel`), `ActivityFormat` | No business rules; formats and exposes. |
 | `src/ui/qml/` | Views and components | Uses the `Theme` singleton for every colour/metric. |
 | `src/core/` | `AppInitializer`, `AppSettings`, `AppEnvironment`, `TranslationManager`, `FileLogger` | Wiring and process-wide concerns. |
@@ -95,9 +95,22 @@ The `activity` table is `(id, app_name, title, started_on, ended_on)` with
   set in both `project.json` and `CMakePresets.json`). vcpkg's manifest install
   removes every package `vcpkg.json` does not list, so a tree shared with
   another project gets that project's packages deleted on each `bootstrap`.
-- **No tests exist yet.** `python bootstrap.py test` currently fails with "no
-  tests were found" — there is no `enable_testing()`/`add_test()` in the build.
-  See `/test`.
-- `README.md` still calls the project "BeeLibrary" and documents a
-  `-DBUILD_TESTS` flag that `CMakeLists.txt` does not define.
+- **Tests** live in `tests/` (Qt Test, one `tst_<Class>.cpp` each, registered
+  by hand in `tests/CMakeLists.txt`; shared fakes in `tests/fakes/Fakes.hpp`)
+  and run with `python bootstrap.py test`. The end-to-end test
+  (`tests/e2e/`, ctest label `e2e`) drives the real app and takes the
+  foreground, so `test` skips it; run it with `python bootstrap.py e2e`, not
+  while typing. See `/test`.
+- **`--profile <dir>`** makes Chronexa keep history, logs and settings (INI
+  instead of the registry) in `<dir>`. Use it for any scripted run, so real
+  history is never touched.
+- **Every build tree must use the same vcpkg.** `build/debug`, `build/release`
+  and any CLion profile share `deps_dir`. A tree configured with a different
+  vcpkg tool (e.g. Visual Studio's bundled one) computes other ABI hashes and
+  reinstalls all packages -- which makes the other trees stale, and they
+  reinstall back: a loop in which every build fails mid-way on missing Qt
+  headers or a Qt tool crashing with `-1073741515`. Check
+  `CMAKE_TOOLCHAIN_FILE` and `Z_VCPKG_ROOT_DIR` in each `CMakeCache.txt`;
+  both must point at `C:/Users/nikit/vcpkg`.
+- `README.md` still calls the project "BeeLibrary".
 - `src/core/ргш` is a stray empty file from a mistyped command; safe to delete.

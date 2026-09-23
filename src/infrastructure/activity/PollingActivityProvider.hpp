@@ -1,22 +1,33 @@
 #pragma once
 
+#include "IForegroundProbe.hpp"
 #include "IUserActivityProvider.hpp"
 
-#include <QHash>
+#include <QDateTime>
 #include <QList>
 #include <QMutex>
 #include <QString>
 
+#include <functional>
 #include <memory>
 
 class QTimer;
 
 namespace chronexa::activity {
 
-class WindowsActivityProvider : public IUserActivityProvider {
+// Turns foreground samples into sessions. Platform-independent: the OS is
+// behind the probe, and the clock is injectable, so every session rule here
+// runs in a unit test.
+class PollingActivityProvider : public IUserActivityProvider {
 public:
-  WindowsActivityProvider();
-  ~WindowsActivityProvider() override;
+  using Clock = std::function<QDateTime()>;
+
+  static constexpr int kPollIntervalMs = 1000;
+  static constexpr qint64 kMinSessionSeconds = 2;
+
+  explicit PollingActivityProvider(std::unique_ptr<IForegroundProbe> probe,
+                                   Clock clock = {});
+  ~PollingActivityProvider() override;
 
   void start() override;
   void stop() override;
@@ -28,15 +39,17 @@ public:
   std::optional<Activity> currentSession() const override;
   bool isIdle() const override;
 
-private:
+  // One sampling step. Driven by the timer while running; public so tests can
+  // step through a scripted sequence of samples.
   void poll();
 
+private:
   void closeCurrentLocked(const QDateTime &at);
   void openCurrentLocked(const QString &appName, const QString &title,
                          const QString &key, const QDateTime &at);
 
-  QString appNameForWindow(void *windowHandle);
-
+  std::unique_ptr<IForegroundProbe> _probe;
+  Clock _clock;
   std::unique_ptr<QTimer> _timer;
 
   mutable QMutex _mutex;
@@ -51,8 +64,6 @@ private:
 
   bool _idle = false;
   bool _running = false;
-
-  QHash<QString, QString> _appNameCache;
 };
 
 } // namespace chronexa::activity

@@ -6,6 +6,11 @@ namespace chronexa::core {
 
 class AppEnvironment {
 public:
+  // Redirects history, logs and settings into one directory, away from the
+  // user's profile. Must run before anything reads a path or a setting; the
+  // end-to-end tests use it so they never touch real data.
+  static void useProfileDir(const QString &dir);
+
   static QString dataPath();
   static QString databasePath();
   static QString logFilePath();

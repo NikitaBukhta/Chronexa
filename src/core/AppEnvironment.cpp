@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QLoggingCategory>
+#include <QSettings>
 #include <QStandardPaths>
 
 #include <memory>
@@ -17,11 +18,27 @@ Q_LOGGING_CATEGORY(lcAppEnv, "chronexa.core.AppEnvironment")
 
 std::unique_ptr<chronexa::core::FileLogger> g_logger;
 
+QString g_profileDir;
+
 } // namespace
 
 namespace chronexa::core {
 
+void AppEnvironment::useProfileDir(const QString &dir) {
+  g_profileDir = QDir(dir).absolutePath();
+  QDir().mkpath(g_profileDir);
+
+  // Covers both AppSettings and the QML Settings objects (Theme), which all
+  // construct QSettings with the default format.
+  QSettings::setDefaultFormat(QSettings::IniFormat);
+  QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, g_profileDir);
+}
+
 QString AppEnvironment::ensureDataDir() {
+  if (!g_profileDir.isEmpty()) {
+    return g_profileDir;
+  }
+
   QString path =
       QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
   QDir dir(path);

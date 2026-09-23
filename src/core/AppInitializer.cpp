@@ -11,6 +11,8 @@
 #include "ui/activity/UserActivityController.hpp"
 #include "ui/settings/SettingsController.hpp"
 
+#include <QCommandLineOption>
+#include <QCommandLineParser>
 #include <QLoggingCategory>
 #include <QQmlContext>
 #include <QQuickStyle>
@@ -33,7 +35,12 @@ namespace chronexa::core {
 
 AppInitializer::AppInitializer(QGuiApplication &app, QObject *parent)
     : QObject(parent), _app(app),
-      _engine(std::make_unique<QQmlApplicationEngine>()) {}
+      _engine(std::make_unique<QQmlApplicationEngine>()) {
+  // Before anything reads a setting or a path: both are keyed on these.
+  QGuiApplication::setOrganizationName(QStringLiteral("Chronexa"));
+  QGuiApplication::setOrganizationDomain(QStringLiteral("chronexa.local"));
+  QGuiApplication::setApplicationName(QStringLiteral("Chronexa"));
+}
 
 AppInitializer::~AppInitializer() = default;
 
@@ -69,7 +76,24 @@ void AppInitializer::shutdown() {
   AppEnvironment::shutdownFileLogger();
 }
 
+void AppInitializer::applyCommandLine() {
+  QCommandLineParser parser;
+  const QCommandLineOption profileOption(
+      QStringLiteral("profile"),
+      QStringLiteral("Keep history, settings and logs in <dir>."),
+      QStringLiteral("dir"));
+  parser.addOption(profileOption);
+  // parse(), not process(): an unknown argument must not stop the app.
+  parser.parse(QCoreApplication::arguments());
+
+  if (parser.isSet(profileOption)) {
+    AppEnvironment::useProfileDir(parser.value(profileOption));
+  }
+}
+
 void AppInitializer::init() {
+  // The profile decides where the log goes, so it comes before the logger.
+  applyCommandLine();
   AppEnvironment::installFileLogger();
 
 #ifdef QT_NO_DEBUG

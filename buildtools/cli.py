@@ -9,6 +9,7 @@ from buildtools.commands import (
     Command,
     CompileCommand,
     DepsCommand,
+    E2eCommand,
     FormatCommand,
     HelpCommand,
     PackageCommand,
@@ -60,6 +61,7 @@ class CommandRegistry:
             ),
             "run": RunCommand(self.config),
             "test": TestCommand(self.config),
+            "e2e": E2eCommand(self.config),
             "package": PackageCommand(self.config, self.shell),
             "clean": CleanCommand(
                 self.config,
@@ -146,6 +148,12 @@ class CLI:
             "test", parents=[help_parser, release_parser],
             add_help=False,
             help="Run unit tests",
+        )
+
+        subs.add_parser(
+            "e2e", parents=[help_parser, release_parser],
+            add_help=False,
+            help="Run end-to-end tests (drives the real app, takes focus)",
         )
 
         subs.add_parser(

@@ -19,6 +19,10 @@ class ActivityService : public QObject {
 public:
   explicit ActivityService(IActivityRepository &repository,
                            QObject *parent = nullptr);
+  // For tests: runs on the given provider instead of the OS one.
+  ActivityService(IActivityRepository &repository,
+                  std::unique_ptr<IUserActivityProvider> provider,
+                  QObject *parent = nullptr);
   ~ActivityService() override;
 
   void requestClear();

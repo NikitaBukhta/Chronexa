@@ -5,9 +5,11 @@
 #include <QTimer>
 #include <QtSystemDetection>
 
+#include "infrastructure/activity/PollingActivityProvider.hpp"
+
 #ifdef Q_OS_WIN
-#include "infrastructure/activity/WindowsActivityProvider.hpp"
-using OSSpecificProvider = chronexa::activity::WindowsActivityProvider;
+#include "infrastructure/activity/WindowsForegroundProbe.hpp"
+using OSSpecificProbe = chronexa::activity::WindowsForegroundProbe;
 #else
 #error "Unsupported platform"
 #endif
@@ -46,8 +48,16 @@ qint64 msUntilNextBoundary() {
 
 ActivityService::ActivityService(IActivityRepository &repository,
                                  QObject *parent)
-    : QObject(parent), _repository(repository) {
-  _activityProvider = std::make_unique<OSSpecificProvider>();
+    : ActivityService(repository,
+                      std::make_unique<PollingActivityProvider>(
+                          std::make_unique<OSSpecificProbe>()),
+                      parent) {}
+
+ActivityService::ActivityService(
+    IActivityRepository &repository,
+    std::unique_ptr<IUserActivityProvider> provider, QObject *parent)
+    : QObject(parent), _repository(repository),
+      _activityProvider(std::move(provider)) {
   applyTrackingState();
 
   scheduleNextFlush();

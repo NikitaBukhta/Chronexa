@@ -1,20 +1,16 @@
+#include "fakes/Fakes.hpp"
 #include "infrastructure/activity/SqliteActivityRepository.hpp"
 
 #include <QTemporaryDir>
 #include <QTest>
-#include <QTimeZone>
 
 #include <algorithm>
 #include <memory>
 
 using namespace chronexa::activity;
+using namespace chronexa::activity::testing;
 
 namespace {
-
-QDateTime utc(int hour, int minute, int second = 0) {
-  return QDateTime(QDate(2026, 9, 1), QTime(hour, minute, second),
-                   QTimeZone::UTC);
-}
 
 const TitleTotal *find(const QList<TitleTotal> &totals, const QString &app,
                        const QString &title) {

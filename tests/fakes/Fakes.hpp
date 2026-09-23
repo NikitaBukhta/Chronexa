@@ -1,0 +1,135 @@
+#pragma once
+
+// Test doubles for the interfaces application/ and infrastructure/ depend on.
+// Header-only: each test executable compiles only what it includes.
+
+#include "infrastructure/activity/IActivityRepository.hpp"
+#include "infrastructure/activity/IForegroundProbe.hpp"
+#include "infrastructure/activity/IUserActivityProvider.hpp"
+
+#include <QDateTime>
+#include <QList>
+#include <QTimeZone>
+
+namespace chronexa::activity::testing {
+
+// A clock that only moves when told to.
+class ManualClock {
+public:
+  explicit ManualClock(QDateTime start) : _now(std::move(start)) {}
+
+  QDateTime now() const { return _now; }
+  void advance(qint64 seconds) { _now = _now.addSecs(seconds); }
+
+private:
+  QDateTime _now;
+};
+
+// Returns whatever the test last put in front of the "user".
+class FakeForegroundProbe : public IForegroundProbe {
+public:
+  ForegroundSample current;
+  int sampleCount = 0;
+
+  ForegroundSample sample() override {
+    ++sampleCount;
+    return current;
+  }
+
+  void show(const QString &appName, const QString &title) {
+    current = {false, appName, title};
+  }
+  void noWindow() { current = {false, {}, {}}; }
+  void goIdle() { current = {true, {}, {}}; }
+};
+
+// Records every write; serves canned title totals to the read side.
+class FakeActivityRepository : public IActivityRepository {
+public:
+  QList<Activity> inserted;
+  QList<TitleTotal> titles;
+  bool failInserts = false;
+  int insertCalls = 0;
+  int clearCalls = 0;
+
+  mutable int titleTotalsCalls = 0;
+  mutable QDateTime lastFrom;
+  mutable QDateTime lastTo;
+
+  bool open() override { return true; }
+  bool insertBatch(const QList<Activity> &activities) override {
+    ++insertCalls;
+    if (failInserts || activities.isEmpty()) {
+      return false;
+    }
+    inserted += activities;
+    return true;
+  }
+  bool clearAll() override {
+    ++clearCalls;
+    inserted.clear();
+    return true;
+  }
+
+  QList<Activity> sessions(const QDateTime &, const QDateTime &,
+                           int) const override {
+    return inserted;
+  }
+  QList<AppTotal> appTotals(const QDateTime &,
+                            const QDateTime &) const override {
+    return {};
+  }
+  QList<TitleTotal> titleTotals(const QDateTime &from,
+                                const QDateTime &to) const override {
+    ++titleTotalsCalls;
+    lastFrom = from;
+    lastTo = to;
+    return titles;
+  }
+  QList<Interval> intervals(const QDateTime &,
+                            const QDateTime &) const override {
+    return {};
+  }
+  RangeStats stats(const QDateTime &, const QDateTime &) const override {
+    return {};
+  }
+  QPair<QDateTime, QDateTime> bounds() const override { return {}; }
+  QStringList rankedAppNames(int) const override { return {}; }
+};
+
+// A provider under full test control; remembers the calls made on it.
+class MockActivityProvider : public IUserActivityProvider {
+public:
+  QList<Activity> pendingEvents;
+  SessionKey sessionKey;
+  bool running = false;
+  int startCalls = 0;
+  int stopCalls = 0;
+
+  void start() override {
+    ++startCalls;
+    running = true;
+  }
+  void stop() override {
+    ++stopCalls;
+    running = false;
+  }
+  bool isRunning() const override { return running; }
+  void setSessionKey(SessionKey key) override { sessionKey = std::move(key); }
+  QList<Activity> drainEvents() override {
+    QList<Activity> drained;
+    drained.swap(pendingEvents);
+    return drained;
+  }
+  std::optional<Activity> currentSession() const override {
+    return std::nullopt;
+  }
+  bool isIdle() const override { return false; }
+};
+
+inline QDateTime utc(int hour, int minute, int second = 0) {
+  return QDateTime(QDate(2026, 9, 1), QTime(hour, minute, second),
+                   QTimeZone::UTC);
+}
+
+} // namespace chronexa::activity::testing

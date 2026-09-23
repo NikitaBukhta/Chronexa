@@ -45,8 +45,11 @@ qt_add_executable(Chronexa
     src/infrastructure/activity/IActivityRepository.hpp
     src/infrastructure/activity/SqliteActivityRepository.hpp
     src/infrastructure/activity/SqliteActivityRepository.cpp
-    src/infrastructure/activity/WindowsActivityProvider.hpp
-    src/infrastructure/activity/WindowsActivityProvider.cpp
+    src/infrastructure/activity/IForegroundProbe.hpp
+    src/infrastructure/activity/PollingActivityProvider.hpp
+    src/infrastructure/activity/PollingActivityProvider.cpp
+    src/infrastructure/activity/WindowsForegroundProbe.hpp
+    src/infrastructure/activity/WindowsForegroundProbe.cpp
 
     src/infrastructure/system/IAutoStartService.hpp
     src/infrastructure/system/WindowsAutoStartService.hpp
