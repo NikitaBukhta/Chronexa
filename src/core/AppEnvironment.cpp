@@ -26,7 +26,7 @@ QString AppEnvironment::ensureDataDir() {
       QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
   QDir dir(path);
   dir.cdUp();
-  path = dir.absoluteFilePath("BeeLibrary");
+  path = dir.absoluteFilePath("Chronexa");
 
   QDir().mkpath(path);
   return path;
@@ -37,7 +37,7 @@ QString AppEnvironment::dataPath() {
   return path;
 }
 
-QString AppEnvironment::databasePath() { return dataPath() + "/beelibrary.db"; }
+QString AppEnvironment::databasePath() { return dataPath() + "/chronexa.db"; }
 
 QString AppEnvironment::logFilePath() {
   const QString timestamp =

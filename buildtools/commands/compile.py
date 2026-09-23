@@ -1,3 +1,5 @@
+import os
+
 from buildtools.commands.base import Command
 from buildtools.commands.format import FormatCommand
 from buildtools.config import ProjectConfig
@@ -24,12 +26,18 @@ class CompileCommand(Command):
 
         cmake_path = self.cmake.ensure()
 
+        # A fresh tree fails in qtpaths (generate_qmlls_build_ini_file) with
+        # 0xC0000135 unless the host tools can find their DLLs.
+        env = os.environ.copy()
+        env["PATH"] = (str(self.config.host_tools_bin_dir) + os.pathsep
+                       + env.get("PATH", ""))
+
         print(f"\n=== Building ({self.config.build_type}) ===")
         self.shell.run([
             cmake_path,
             "--build", "--preset", self.config.cmake_preset,
             "--config", self.config.build_type,
             "-j", str(self.config.jobs),
-        ])
+        ], env=env)
 
         print("\nBuild complete.")

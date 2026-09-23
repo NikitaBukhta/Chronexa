@@ -63,6 +63,13 @@ endif()
 if(NOT VCPKG_INSTALLED_DIR AND _chronexa_installed)
   set(VCPKG_INSTALLED_DIR "${_chronexa_installed}"
       CACHE PATH "Vcpkg installed dir (Chronexa auto-bootstrap)")
+elseif(_chronexa_installed AND NOT VCPKG_INSTALLED_DIR STREQUAL _chronexa_installed)
+  # A preset / -D / cached value already set this. Respect it, but say so --
+  # otherwise editing deps_dir in project.json looks like it did nothing.
+  message(WARNING
+    "Chronexa: VCPKG_INSTALLED_DIR is '${VCPKG_INSTALLED_DIR}' but project.json "
+    "asks for '${_chronexa_installed}'. The existing value wins; update "
+    "CMakePresets.json (or clear the cache) to follow project.json.")
 endif()
 if(NOT VCPKG_TARGET_TRIPLET)
   set(VCPKG_TARGET_TRIPLET "x64-windows"

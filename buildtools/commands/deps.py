@@ -42,6 +42,7 @@ class DepsCommand(Command):
         self.ensure()
 
         # Machine-readable markers consumed by cmake/AutoBootstrap.cmake.
-        toolchain = self.config.vcpkg_toolchain
-        print(f"CHRONEXA_VCPKG_TOOLCHAIN={toolchain.as_posix()}")
+        # Report the toolchain of the vcpkg that ensure() actually resolved,
+        # not the configured location -- they differ when vcpkg is on PATH.
+        print(f"CHRONEXA_VCPKG_TOOLCHAIN={self.vcpkg.toolchain.as_posix()}")
         print(f"CHRONEXA_VCPKG_INSTALLED_DIR={self.config.deps_dir.as_posix()}")

@@ -4,6 +4,7 @@ from buildtools.commands.base import Command
 from buildtools.commands.deps import DepsCommand
 from buildtools.config import ProjectConfig
 from buildtools.providers.cmake import CMakeProvider
+from buildtools.providers.vcpkg import VcpkgProvider
 from buildtools.shell import Shell
 
 
@@ -14,11 +15,13 @@ class BootstrapCommand(Command):
     summary = "Install dependencies and configure the project"
 
     def __init__(self, config: ProjectConfig, shell: Shell,
-                 deps: DepsCommand, cmake: CMakeProvider):
+                 deps: DepsCommand, cmake: CMakeProvider,
+                 vcpkg: VcpkgProvider):
         self.config = config
         self.shell = shell
         self.deps = deps
         self.cmake = cmake
+        self.vcpkg = vcpkg
 
     def execute(self) -> None:
         # Ensure venv + vcpkg + clang-format via the shared deps logic, so
@@ -35,7 +38,7 @@ class BootstrapCommand(Command):
             # vcpkg is already ensured above; provide the toolchain directly
             # and skip the CMake-side auto-bootstrap to avoid a redundant
             # nested `bootstrap.py deps` call during configuration.
-            f"-DCMAKE_TOOLCHAIN_FILE={self.config.vcpkg_toolchain.as_posix()}",
+            f"-DCMAKE_TOOLCHAIN_FILE={self.vcpkg.toolchain.as_posix()}",
             "-DCHRONEXA_SKIP_AUTO_BOOTSTRAP=ON",
         ]
         for d in self.config.cmake_defs:
@@ -51,8 +54,9 @@ class BootstrapCommand(Command):
         print(f"Run `python bootstrap.py compile{flag}` to build the project.")
 
     def _cleanup_vcpkg_temp(self) -> None:
+        # Scratch trees of the vcpkg we just built with -- reclaim the disk.
         for sub in ("buildtrees", "packages"):
-            path = self.config.vcpkg_dir / sub
+            path = self.vcpkg.root / sub
             if path.exists():
                 if self.shell.dry_run:
                     print(f"[dry-run] would clean {path}")

@@ -107,10 +107,24 @@ Inno Setup will be installed automatically if not found on the system.
 
 ## Clean
 
-Remove all dependencies, build directories, and venv:
+Remove build directories and the venv:
 
 ```bash
 python bootstrap.py clean
+```
+
+The vcpkg install tree (`deps_dir` in `project.json`,
+`~/vcpkg_install_deps_chronexa`) is kept, because it lives outside the project.
+Keep it private to Chronexa: vcpkg's manifest install removes every package the
+manifest does not list, so a tree shared with another project gets its packages
+deleted on each `bootstrap`. If you change `deps_dir`, change
+`VCPKG_INSTALLED_DIR` in `CMakePresets.json` to match. To remove the tree too —
+forcing a full source rebuild of Qt:
+
+```bash
+python bootstrap.py clean --deps          # prompts for confirmation
+python bootstrap.py clean --deps --yes    # no prompt
+python bootstrap.py clean --deps --dry-run
 ```
 
 Run `python bootstrap.py help` for full command reference and status.

@@ -70,7 +70,11 @@ class HelpCommand(Command):
         print("  -j, --jobs N     Limit parallel build jobs (default: all cores)")
         print("                   Applies to: compile")
         print("  --dry-run        Show commands without executing them")
-        print("                   Applies to: bootstrap")
+        print("                   Applies to: bootstrap, clean")
+        print("  --deps           Also remove the shared vcpkg install tree")
+        print("                   Applies to: clean")
+        print("  --yes            Skip the --deps confirmation prompt")
+        print("                   Applies to: clean")
 
     def _print_paths(self) -> None:
         print("\nPaths:")

@@ -2,9 +2,13 @@ import os
 from pathlib import Path
 
 from buildtools.config import ProjectConfig
+from buildtools.errors import BuildError
 from buildtools.providers.base import ToolProvider
 from buildtools.providers.git import GitProvider
 from buildtools.shell import Shell
+
+# Relative location of the CMake toolchain inside any vcpkg checkout.
+TOOLCHAIN_RELPATH = Path("scripts") / "buildsystems" / "vcpkg.cmake"
 
 
 class VcpkgProvider(ToolProvider):
@@ -13,11 +17,30 @@ class VcpkgProvider(ToolProvider):
         super().__init__(shell)
         self.config = config
         self.git = git
+        self._root: Path | None = None
+
+    @property
+    def root(self) -> Path:
+        """Root of the vcpkg checkout that ensure() actually resolved.
+
+        This is NOT always config.vcpkg_dir -- a vcpkg already on PATH wins.
+        """
+        if self._root is None:
+            raise BuildError("vcpkg root requested before VcpkgProvider.ensure()")
+        return self._root
+
+    @property
+    def toolchain(self) -> Path:
+        """Toolchain file of the resolved vcpkg (single source of truth)."""
+        return self.root / TOOLCHAIN_RELPATH
 
     def ensure(self) -> Path:
-        # already on PATH
+        # Already on PATH -- but only usable if it is a real checkout. Some
+        # vcpkg.exe on PATH (e.g. the Visual Studio shim) has no scripts/
+        # tree next to it, and adopting its parent as VCPKG_ROOT would hand
+        # CMake a toolchain path that does not exist.
         found = self.shell.which("vcpkg")
-        if found:
+        if found and self._is_checkout(Path(found).parent):
             self._set_root(Path(found).parent)
             return Path(found)
 
@@ -45,5 +68,9 @@ class VcpkgProvider(ToolProvider):
         self._set_root(vcpkg_dir)
 
     @staticmethod
-    def _set_root(path: Path) -> None:
+    def _is_checkout(path: Path) -> bool:
+        return (path / TOOLCHAIN_RELPATH).exists()
+
+    def _set_root(self, path: Path) -> None:
+        self._root = path
         os.environ["VCPKG_ROOT"] = str(path)

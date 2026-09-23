@@ -4,11 +4,13 @@
 
 #include <QAbstractListModel>
 #include <QList>
+#include <QStringList>
 
 namespace chronexa::activity {
 
 class UserActivityModel : public QAbstractListModel {
   Q_OBJECT
+  Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
 public:
   enum Role {
@@ -17,6 +19,11 @@ public:
     StartedOnRole,
     EndedOnRole,
     DurationSecondsRole,
+    DurationTextRole,
+    StartedTextRole,
+    EndedTextRole,
+    DayTextRole,
+    ColorSlotRole,
   };
 
   explicit UserActivityModel(QObject *parent = nullptr);
@@ -26,12 +33,19 @@ public:
                 int role = Qt::DisplayRole) const override;
   QHash<int, QByteArray> roleNames() const override;
 
+  void setActivities(QList<Activity> activities);
+
+  void setColorOrder(const QStringList &appNames);
+
 public slots:
-  void onActivitiesReceived(QList<Activity> batch);
   void clear();
+
+signals:
+  void countChanged();
 
 private:
   QList<Activity> _activities;
+  QStringList _colorOrder;
 };
 
 } // namespace chronexa::activity

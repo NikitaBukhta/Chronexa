@@ -4,13 +4,13 @@
     {
       "name": "vcpkg",
       "hidden": true,
-      "displayName": "vcpkg (Qt 6.8)",
-      "description": "Build with vcpkg-managed Qt 6.8 dependencies",
+      "displayName": "vcpkg",
+      "description": "Build with vcpkg-managed Qt (version pinned in vcpkg.json)",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "VCPKG_INSTALLED_DIR": {
           "type": "PATH",
-          "value": "$env{USERPROFILE}/vcpkg_install_deps"
+          "value": "$env{USERPROFILE}/vcpkg_install_deps_chronexa"
         },
         "VCPKG_TARGET_TRIPLET": {
           "type": "STRING",

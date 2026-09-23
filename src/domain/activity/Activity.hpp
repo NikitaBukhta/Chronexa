@@ -10,6 +10,9 @@ struct Activity {
   QString title;
   QDateTime startedOn;
   QDateTime endedOn;
+
+  bool isValid() const;
+  qint64 durationSeconds() const;
 };
 
 } // namespace chronexa::activity

@@ -90,12 +90,20 @@ class ProjectConfig:
     def qt_qml_dir(self) -> Path:
         return self._vcpkg_triplet_dir / "Qt6" / "qml"
 
+    @property
+    def host_tools_bin_dir(self) -> Path:
+        """DLLs for the Qt host tools run during a build (qtpaths, moc, ...).
+
+        Always the release bin/, even for Debug: the tools are release builds.
+        vcpkg does not copy every dependency (e.g. ICU) next to the tools.
+        """
+        return self.deps_dir / "x64-windows" / "bin"
+
     def vcpkg_executable(self) -> Path:
         """Return the expected path for the vcpkg binary."""
         exe = "vcpkg.exe" if self.is_windows else "vcpkg"
         return self.vcpkg_dir / exe
 
-    @property
-    def vcpkg_toolchain(self) -> Path:
-        """Path to the vcpkg CMake toolchain file (single source of truth)."""
-        return self.vcpkg_dir / "scripts" / "buildsystems" / "vcpkg.cmake"
+    # NOTE: the toolchain path deliberately lives on VcpkgProvider, not here.
+    # Only the provider knows which vcpkg was actually resolved (configured
+    # clone vs one already on PATH), so it owns that single source of truth.

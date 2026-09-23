@@ -1,5 +1,7 @@
 #include "UserActivityModel.hpp"
 
+#include "ActivityFormat.hpp"
+
 namespace chronexa::activity {
 
 UserActivityModel::UserActivityModel(QObject *parent)
@@ -21,22 +23,29 @@ QVariant UserActivityModel::data(const QModelIndex &index, int role) const {
     return {};
   }
 
-  const Activity &a = _activities.at(row);
+  const Activity &activity = _activities.at(row);
   switch (role) {
   case AppNameRole:
   case Qt::DisplayRole:
-    return a.appName;
+    return activity.appName;
   case TitleRole:
-    return a.title;
+    return activity.title;
   case StartedOnRole:
-    return a.startedOn;
+    return activity.startedOn;
   case EndedOnRole:
-    return a.endedOn;
+    return activity.endedOn;
   case DurationSecondsRole:
-    if (a.startedOn.isValid() && a.endedOn.isValid()) {
-      return static_cast<qint64>(a.startedOn.secsTo(a.endedOn));
-    }
-    return 0;
+    return activity.durationSeconds();
+  case DurationTextRole:
+    return format::duration(activity.durationSeconds());
+  case StartedTextRole:
+    return format::clock(activity.startedOn);
+  case EndedTextRole:
+    return format::clock(activity.endedOn);
+  case DayTextRole:
+    return format::dayLabel(activity.startedOn.date());
+  case ColorSlotRole:
+    return _colorOrder.indexOf(activity.appName);
   default:
     return {};
   }
@@ -49,21 +58,29 @@ QHash<int, QByteArray> UserActivityModel::roleNames() const {
       {StartedOnRole, "startedOn"},
       {EndedOnRole, "endedOn"},
       {DurationSecondsRole, "durationSeconds"},
+      {DurationTextRole, "durationText"},
+      {StartedTextRole, "startedText"},
+      {EndedTextRole, "endedText"},
+      {DayTextRole, "dayText"},
+      {ColorSlotRole, "colorSlot"},
   };
 }
 
-void UserActivityModel::onActivitiesReceived(QList<Activity> batch) {
-  if (batch.isEmpty()) {
+void UserActivityModel::setActivities(QList<Activity> activities) {
+  beginResetModel();
+  _activities = std::move(activities);
+  endResetModel();
+  emit countChanged();
+}
+
+void UserActivityModel::setColorOrder(const QStringList &appNames) {
+  if (_colorOrder == appNames) {
     return;
   }
-
-  const int first = _activities.size();
-  const int last = first + batch.size() - 1;
-  beginInsertRows(QModelIndex(), first, last);
-
-  _activities.append(std::move(batch));
-
-  endInsertRows();
+  _colorOrder = appNames;
+  if (!_activities.isEmpty()) {
+    emit dataChanged(index(0), index(_activities.size() - 1), {ColorSlotRole});
+  }
 }
 
 void UserActivityModel::clear() {
@@ -73,6 +90,7 @@ void UserActivityModel::clear() {
   beginResetModel();
   _activities.clear();
   endResetModel();
+  emit countChanged();
 }
 
 } // namespace chronexa::activity

@@ -41,14 +41,14 @@ class CommandRegistry:
             self.shell, self._venv_mgr, config.project_dir,
         )
 
-    def build(self) -> dict[str, Command]:
+    def build(self, args: argparse.Namespace | None = None) -> dict[str, Command]:
         deps = DepsCommand(
             self.config, self.shell,
             self._venv_mgr, self._vcpkg, self._clang_format,
         )
         commands: dict[str, Command] = {
             "bootstrap": BootstrapCommand(
-                self.config, self.shell, deps, self._cmake,
+                self.config, self.shell, deps, self._cmake, self._vcpkg,
             ),
             "compile": CompileCommand(
                 self.config, self.shell, self._cmake,
@@ -61,7 +61,11 @@ class CommandRegistry:
             "run": RunCommand(self.config),
             "test": TestCommand(self.config),
             "package": PackageCommand(self.config, self.shell),
-            "clean": CleanCommand(self.config),
+            "clean": CleanCommand(
+                self.config,
+                remove_deps=getattr(args, "deps", False),
+                assume_yes=getattr(args, "yes", False),
+            ),
         }
         commands["help"] = HelpCommand(self.config, self.shell, commands)
         return commands
@@ -150,10 +154,22 @@ class CLI:
             help="Auto-format C++ source files",
         )
 
-        subs.add_parser(
+        p_clean = subs.add_parser(
             "clean", parents=[help_parser],
             add_help=False,
-            help="Remove dependencies, build dirs, and venv",
+            help="Remove build dirs and venv (--deps also removes dependencies)",
+        )
+        p_clean.add_argument(
+            "--deps", action="store_true",
+            help="Also remove the shared vcpkg install tree (deps_dir)",
+        )
+        p_clean.add_argument(
+            "--yes", action="store_true",
+            help="Skip the confirmation prompt for --deps",
+        )
+        p_clean.add_argument(
+            "--dry-run", action="store_true",
+            help="Show what would be removed without removing it",
         )
 
         subs.add_parser("help", parents=[help_parser],
@@ -179,7 +195,7 @@ class CLI:
         config = ProjectConfig(**kwargs)
         command_name = args.command or "help"
         registry = CommandRegistry(config)
-        commands = registry.build()
+        commands = registry.build(args)
 
         try:
             commands[command_name].execute()

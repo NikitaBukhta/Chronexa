@@ -3,7 +3,14 @@
   "version-string": "0.1",
   "dependencies": [
     "qtbase",
-    "qtdeclarative"
+    "qtdeclarative",
+    {
+      "name": "qttools",
+      "default-features": false,
+      "features": [
+        "linguist"
+      ]
+    }
   ],
   "overrides": [
     {
@@ -24,6 +31,10 @@
     },
     {
       "name": "qtsvg",
+      "version": "6.10.2"
+    },
+    {
+      "name": "qttools",
       "version": "6.10.2"
     }
   ]
