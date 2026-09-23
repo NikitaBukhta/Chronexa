@@ -1,3 +1,4 @@
+import QtCore
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -14,6 +15,56 @@ ApplicationWindow {
     color: Theme.plane
 
     readonly property var activePage: [dayQuery, periodQuery, logQuery, null][nav.currentIndex]
+
+    Settings {
+        id: savedWindow
+
+        category: "window"
+
+        property bool saved: false
+        property int x: 0
+        property int y: 0
+        property int width: 1280
+        property int height: 860
+        property bool maximized: false
+    }
+
+    function onAnyScreen(x, y) {
+        const screens = Qt.application.screens;
+        for (let i = 0; i < screens.length; ++i) {
+            const s = screens[i];
+            if (x >= s.virtualX && x < s.virtualX + s.width && y >= s.virtualY && y < s.virtualY + s.height)
+                return true;
+        }
+        return false;
+    }
+
+    Component.onCompleted: {
+        if (!savedWindow.saved)
+            return;
+        root.width = Math.max(root.minimumWidth, savedWindow.width);
+        root.height = Math.max(root.minimumHeight, savedWindow.height);
+        // A monitor unplugged since the last run must not strand the window
+        // off-screen: the title bar has to land on a screen that still exists.
+        if (onAnyScreen(savedWindow.x + 80, savedWindow.y + 10)) {
+            root.x = savedWindow.x;
+            root.y = savedWindow.y;
+        }
+        if (savedWindow.maximized)
+            root.visibility = Window.Maximized;
+    }
+
+    onClosing: {
+        savedWindow.maximized = root.visibility === Window.Maximized;
+        if (root.visibility === Window.Windowed) {
+            savedWindow.x = root.x;
+            savedWindow.y = root.y;
+            savedWindow.width = root.width;
+            savedWindow.height = root.height;
+        }
+        savedWindow.saved = true;
+        savedWindow.sync();
+    }
 
     RowLayout {
         anchors.fill: parent

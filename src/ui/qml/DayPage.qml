@@ -278,8 +278,11 @@ Item {
                 Layout.bottomMargin: Theme.gapLoose
                 spacing: Theme.gap
 
+                // Both cards take the row's height: the shorter one was
+                // centred in it, leaving a gap above its title.
                 Card {
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
                     Layout.preferredWidth: 1
                     title: qsTr("By application")
                     subtitle: qsTr("The colours used above")
@@ -296,10 +299,16 @@ Item {
                         visible: root.query.empty
                         headline: qsTr("No applications")
                     }
+
+                    // Keeps the list at the top of the stretched card.
+                    Item {
+                        Layout.fillHeight: true
+                    }
                 }
 
                 Card {
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
                     Layout.preferredWidth: 1
                     title: qsTr("Sessions")
                     subtitle: qsTr("%1 on this day, newest first").arg(root.query.sessionCount)
