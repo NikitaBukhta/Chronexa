@@ -24,6 +24,45 @@
     </message>
 </context>
 <context>
+    <name>CategoryRuleList</name>
+    <message>
+        <source>Category</source>
+        <translation>Категория</translation>
+    </message>
+    <message>
+        <source>Applications, comma-separated</source>
+        <translation>Приложения через запятую</translation>
+    </message>
+    <message>
+        <source>Window title (regex)</source>
+        <translation>Заголовок окна (regex)</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Название</translation>
+    </message>
+    <message>
+        <source>Any application</source>
+        <translation>Любое приложение</translation>
+    </message>
+    <message>
+        <source>Any title</source>
+        <translation>Любой заголовок</translation>
+    </message>
+    <message>
+        <source>No rules — all time counts as uncategorized.</source>
+        <translation>Правил нет — всё время считается без категории.</translation>
+    </message>
+    <message>
+        <source>Add rule</source>
+        <translation>Добавить правило</translation>
+    </message>
+    <message>
+        <source>Restore defaults</source>
+        <translation>Вернуть по умолчанию</translation>
+    </message>
+</context>
+<context>
     <name>DayPage</name>
     <message>
         <source>Today</source>
@@ -120,6 +159,18 @@
     <message>
         <source>%1 on this day, newest first</source>
         <translation>%1 в этот день, сначала новые</translation>
+    </message>
+    <message>
+        <source>By category</source>
+        <translation>По категориям</translation>
+    </message>
+    <message>
+        <source>What the day went on</source>
+        <translation>На что ушёл день</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Категория</translation>
     </message>
 </context>
 <context>
@@ -403,6 +454,22 @@
         <source>No applications in this period</source>
         <translation>Нет приложений за этот период</translation>
     </message>
+    <message>
+        <source>What the time went on</source>
+        <translation>На что ушло время</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n categories · rules are set in Settings</source>
+        <translation>
+            <numerusform>%n категория · правила задаются в настройках</numerusform>
+            <numerusform>%n категории · правила задаются в настройках</numerusform>
+            <numerusform>%n категорий · правила задаются в настройках</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Категория</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -588,6 +655,14 @@
         <source>Clear history…</source>
         <translation>Очистить историю…</translation>
     </message>
+    <message>
+        <source>Categories</source>
+        <translation>Категории</translation>
+    </message>
+    <message>
+        <source>The first matching rule decides, so put narrow rules (YouTube in a browser) above broad ones.</source>
+        <translation>Решает первое подходящее правило, поэтому узкие правила (YouTube в браузере) ставьте выше общих.</translation>
+    </message>
 </context>
 <context>
     <name>TimelineBand</name>
@@ -629,6 +704,28 @@
     <message>
         <source>Start</source>
         <translation>Запустить</translation>
+    </message>
+</context>
+<context>
+    <name>chronexa::activity::ActivityQueryController</name>
+    <message>
+        <source>Uncategorized</source>
+        <translation>Без категории</translation>
+    </message>
+</context>
+<context>
+    <name>chronexa::activity::CategoryRulesModel</name>
+    <message>
+        <source>Distractions</source>
+        <translation>Отвлечения</translation>
+    </message>
+    <message>
+        <source>Work</source>
+        <translation>Работа</translation>
+    </message>
+    <message>
+        <source>Communication</source>
+        <translation>Общение</translation>
     </message>
 </context>
 <context>

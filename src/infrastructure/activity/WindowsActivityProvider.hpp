@@ -22,6 +22,8 @@ public:
   void stop() override;
   bool isRunning() const override;
 
+  void setSessionKey(SessionKey key) override;
+
   QList<Activity> drainEvents() override;
   std::optional<Activity> currentSession() const override;
   bool isIdle() const override;
@@ -31,7 +33,7 @@ private:
 
   void closeCurrentLocked(const QDateTime &at);
   void openCurrentLocked(const QString &appName, const QString &title,
-                         const QDateTime &at);
+                         const QString &key, const QDateTime &at);
 
   QString appNameForWindow(void *windowHandle);
 
@@ -40,7 +42,10 @@ private:
   mutable QMutex _mutex;
   QList<Activity> _buffer;
 
+  SessionKey _sessionKey;
+
   Activity _current;
+  QString _currentKey;
   QDateTime _currentSince;
   bool _hasCurrent = false;
 

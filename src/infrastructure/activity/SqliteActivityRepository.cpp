@@ -208,6 +208,38 @@ QList<AppTotal> SqliteActivityRepository::appTotals(const QDateTime &from,
   return result;
 }
 
+QList<TitleTotal>
+SqliteActivityRepository::titleTotals(const QDateTime &from,
+                                      const QDateTime &to) const {
+  QList<TitleTotal> result;
+  if (!_db.isOpen() || !from.isValid() || !to.isValid() || from >= to) {
+    return result;
+  }
+
+  QSqlQuery query(_db);
+  query.prepare(QStringLiteral("SELECT app_name, title, sum(%1 - %2), count(*) "
+                               "FROM activity WHERE %3 "
+                               "GROUP BY app_name, title")
+                    .arg(kClippedEnd, kClippedStart, kOverlaps));
+  query.bindValue(QStringLiteral(":from"), toMs(from));
+  query.bindValue(QStringLiteral(":to"), toMs(to));
+
+  if (!query.exec()) {
+    qCWarning(lcRepo) << "titleTotals() failed:" << query.lastError().text();
+    return result;
+  }
+
+  while (query.next()) {
+    TitleTotal total;
+    total.appName = query.value(0).toString();
+    total.title = query.value(1).toString();
+    total.milliseconds = query.value(2).toLongLong();
+    total.sessionCount = query.value(3).toInt();
+    result.append(total);
+  }
+  return result;
+}
+
 QList<IActivityRepository::Interval>
 SqliteActivityRepository::intervals(const QDateTime &from,
                                     const QDateTime &to) const {

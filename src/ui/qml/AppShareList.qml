@@ -6,6 +6,8 @@ Item {
 
     property var totalsModel: null
 
+    property string nameHeader: qsTr("Application")
+
     property int visibleRows: 0
 
     readonly property int rowCount: totalsModel ? totalsModel.count : 0
@@ -34,7 +36,7 @@ Item {
         Text {
             x: root.nameX
             width: root.nameWidth
-            text: qsTr("Application")
+            text: root.nameHeader
             color: Theme.inkFaint
             font.pixelSize: Theme.fontMicro
             elide: Text.ElideRight

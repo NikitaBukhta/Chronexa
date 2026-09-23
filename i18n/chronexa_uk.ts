@@ -24,6 +24,45 @@
     </message>
 </context>
 <context>
+    <name>CategoryRuleList</name>
+    <message>
+        <source>Category</source>
+        <translation>Категорія</translation>
+    </message>
+    <message>
+        <source>Applications, comma-separated</source>
+        <translation>Застосунки через кому</translation>
+    </message>
+    <message>
+        <source>Window title (regex)</source>
+        <translation>Заголовок вікна (regex)</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Назва</translation>
+    </message>
+    <message>
+        <source>Any application</source>
+        <translation>Будь-який застосунок</translation>
+    </message>
+    <message>
+        <source>Any title</source>
+        <translation>Будь-який заголовок</translation>
+    </message>
+    <message>
+        <source>No rules — all time counts as uncategorized.</source>
+        <translation>Правил немає — увесь час рахується без категорії.</translation>
+    </message>
+    <message>
+        <source>Add rule</source>
+        <translation>Додати правило</translation>
+    </message>
+    <message>
+        <source>Restore defaults</source>
+        <translation>Повернути типові</translation>
+    </message>
+</context>
+<context>
     <name>DayPage</name>
     <message>
         <source>Today</source>
@@ -120,6 +159,18 @@
     <message>
         <source>%1 on this day, newest first</source>
         <translation>%1 цього дня, найновіші спершу</translation>
+    </message>
+    <message>
+        <source>By category</source>
+        <translation>За категоріями</translation>
+    </message>
+    <message>
+        <source>What the day went on</source>
+        <translation>На що пішов день</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Категорія</translation>
     </message>
 </context>
 <context>
@@ -403,6 +454,22 @@
         <source>No applications in this period</source>
         <translation>Немає програм за цей період</translation>
     </message>
+    <message>
+        <source>What the time went on</source>
+        <translation>На що пішов час</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n categories · rules are set in Settings</source>
+        <translation>
+            <numerusform>%n категорія · правила задаються в налаштуваннях</numerusform>
+            <numerusform>%n категорії · правила задаються в налаштуваннях</numerusform>
+            <numerusform>%n категорій · правила задаються в налаштуваннях</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Категорія</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -588,6 +655,14 @@
         <source>Clear history…</source>
         <translation>Очистити історію…</translation>
     </message>
+    <message>
+        <source>Categories</source>
+        <translation>Категорії</translation>
+    </message>
+    <message>
+        <source>The first matching rule decides, so put narrow rules (YouTube in a browser) above broad ones.</source>
+        <translation>Вирішує перше відповідне правило, тож вузькі правила (YouTube у браузері) ставте вище загальних.</translation>
+    </message>
 </context>
 <context>
     <name>TimelineBand</name>
@@ -629,6 +704,28 @@
     <message>
         <source>Start</source>
         <translation>Почати</translation>
+    </message>
+</context>
+<context>
+    <name>chronexa::activity::ActivityQueryController</name>
+    <message>
+        <source>Uncategorized</source>
+        <translation>Без категорії</translation>
+    </message>
+</context>
+<context>
+    <name>chronexa::activity::CategoryRulesModel</name>
+    <message>
+        <source>Distractions</source>
+        <translation>Відволікання</translation>
+    </message>
+    <message>
+        <source>Work</source>
+        <translation>Робота</translation>
+    </message>
+    <message>
+        <source>Communication</source>
+        <translation>Спілкування</translation>
     </message>
 </context>
 <context>

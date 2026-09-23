@@ -47,10 +47,14 @@ class ActivityQueryController : public QObject {
   Q_PROPERTY(
       qint64 dailyAverageSeconds READ dailyAverageSeconds NOTIFY dataChanged)
   Q_PROPERTY(bool empty READ isEmpty NOTIFY dataChanged)
+  Q_PROPERTY(bool hasCategoryRules READ hasCategoryRules NOTIFY dataChanged)
+  Q_PROPERTY(int categoryCount READ categoryCount NOTIFY dataChanged)
 
   Q_PROPERTY(chronexa::activity::TimeBucketModel *buckets READ buckets CONSTANT)
   Q_PROPERTY(
       chronexa::activity::AppTotalsModel *appTotals READ appTotals CONSTANT)
+  Q_PROPERTY(chronexa::activity::AppTotalsModel *categoryTotals READ
+                 categoryTotals CONSTANT)
   Q_PROPERTY(
       chronexa::activity::UserActivityModel *sessions READ sessions CONSTANT)
 
@@ -83,9 +87,12 @@ public:
   int activeDayCount() const;
   qint64 dailyAverageSeconds() const;
   bool isEmpty() const;
+  bool hasCategoryRules() const;
+  int categoryCount() const;
 
   TimeBucketModel *buckets() const;
   AppTotalsModel *appTotals() const;
+  AppTotalsModel *categoryTotals() const;
   UserActivityModel *sessions() const;
 
   Q_INVOKABLE void applyPreset(const QString &preset);
@@ -123,6 +130,7 @@ private:
 
   TimeBucketModel *_buckets = nullptr;
   AppTotalsModel *_appTotals = nullptr;
+  AppTotalsModel *_categoryTotals = nullptr;
   UserActivityModel *_sessions = nullptr;
   QTimer *_refreshTimer = nullptr;
 
@@ -141,6 +149,7 @@ private:
   QString _topAppName;
   qint64 _topAppSeconds = 0;
   int _activeDayCount = 0;
+  int _categoryCount = 0;
 };
 
 } // namespace chronexa::activity

@@ -7,6 +7,7 @@
 #include "application/activity/ActivityService.hpp"
 #include "infrastructure/activity/SqliteActivityRepository.hpp"
 #include "ui/activity/ActivityQueryController.hpp"
+#include "ui/activity/CategoryRulesModel.hpp"
 #include "ui/activity/UserActivityController.hpp"
 #include "ui/settings/SettingsController.hpp"
 
@@ -53,6 +54,7 @@ void AppInitializer::shutdown() {
   _logQuery.reset();
   _periodQuery.reset();
   _dayQuery.reset();
+  _categoryRules.reset();
   _activityController.reset();
   _activityService.reset();
   _activityQueryService.reset();
@@ -108,6 +110,14 @@ void AppInitializer::buildActivityModule() {
   _activityService =
       std::make_unique<activity::ActivityService>(*_activityRepository);
 
+  // Seeds the default rules on first run, so it comes before anything reads
+  // them. Built after the settings module: the default names are translated.
+  _categoryRules =
+      std::make_unique<activity::CategoryRulesModel>(_settings.get());
+  applyCategoryRules();
+  QObject::connect(_settings.get(), &AppSettings::categoryRulesChanged,
+                   _activityService.get(), [this]() { applyCategoryRules(); });
+
   _activityService->setSchedule(_settings->schedule());
   _activityService->setTrackingEnabled(_settings->trackingEnabled());
 
@@ -140,6 +150,8 @@ void AppInitializer::buildActivityModule() {
   for (activity::ActivityQueryController *query :
        {_dayQuery.get(), _periodQuery.get(), _logQuery.get(),
         _monthQuery.get()}) {
+    QObject::connect(_settings.get(), &AppSettings::categoryRulesChanged, query,
+                     &activity::ActivityQueryController::refreshLater);
     QObject::connect(_activityService.get(),
                      &activity::ActivityService::activityRecorded, query,
                      &activity::ActivityQueryController::refreshLater);
@@ -154,6 +166,12 @@ void AppInitializer::buildActivityModule() {
   qCInfo(lcInit) << "Activity module wired";
 }
 
+void AppInitializer::applyCategoryRules() {
+  const QList<activity::CategoryRule> &rules = _settings->categoryRules();
+  _activityQueryService->setCategoryRules(activity::CategoryRules(rules));
+  _activityService->setCategoryRules(rules);
+}
+
 void AppInitializer::registerQmlTypes() {
   QQmlContext *context = _engine->rootContext();
   context->setContextProperty("activityController", _activityController.get());
@@ -163,6 +181,7 @@ void AppInitializer::registerQmlTypes() {
   context->setContextProperty("periodQuery", _periodQuery.get());
   context->setContextProperty("logQuery", _logQuery.get());
   context->setContextProperty("monthQuery", _monthQuery.get());
+  context->setContextProperty("categoryRules", _categoryRules.get());
 
   QObject::connect(
       _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app,

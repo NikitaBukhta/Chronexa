@@ -11,6 +11,7 @@ namespace chronexa::activity {
 class ActivityQueryController;
 class ActivityQueryService;
 class ActivityService;
+class CategoryRulesModel;
 class SqliteActivityRepository;
 class UserActivityController;
 
@@ -45,6 +46,7 @@ private:
   void init();
   void buildSettingsModule();
   void buildActivityModule();
+  void applyCategoryRules();
   void registerQmlTypes();
   void shutdown();
 
@@ -61,6 +63,7 @@ private:
   std::unique_ptr<activity::ActivityQueryService> _activityQueryService;
   std::unique_ptr<activity::ActivityService> _activityService;
   std::unique_ptr<activity::UserActivityController> _activityController;
+  std::unique_ptr<activity::CategoryRulesModel> _categoryRules;
 
   std::unique_ptr<activity::ActivityQueryController> _dayQuery;
   std::unique_ptr<activity::ActivityQueryController> _periodQuery;

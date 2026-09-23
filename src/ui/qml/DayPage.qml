@@ -256,6 +256,21 @@ Item {
                 }
             }
 
+            Card {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.gapLoose
+                Layout.rightMargin: Theme.gapLoose
+                visible: root.query.hasCategoryRules && !root.query.empty
+                title: qsTr("By category")
+                subtitle: qsTr("What the day went on")
+
+                AppShareList {
+                    Layout.fillWidth: true
+                    totalsModel: root.query.categoryTotals
+                    nameHeader: qsTr("Category")
+                }
+            }
+
             RowLayout {
                 Layout.fillWidth: true
                 Layout.leftMargin: Theme.gapLoose

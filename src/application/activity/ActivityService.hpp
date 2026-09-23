@@ -1,5 +1,6 @@
 #pragma once
 
+#include "domain/activity/CategoryRules.hpp"
 #include "domain/activity/TrackingSchedule.hpp"
 #include "infrastructure/activity/IActivityRepository.hpp"
 #include "infrastructure/activity/IUserActivityProvider.hpp"
@@ -27,6 +28,10 @@ public:
 
   void setSchedule(const TrackingSchedule &schedule);
   TrackingSchedule schedule() const;
+
+  // Sessions are split where the category changes, so a browser session that
+  // moves from a work tab to YouTube is recorded as two.
+  void setCategoryRules(const QList<CategoryRule> &rules);
 
   bool isTracking() const;
 

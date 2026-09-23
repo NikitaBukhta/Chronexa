@@ -27,6 +27,7 @@ ActivityQueryController::ActivityQueryController(
     ActivityQueryService &queryService, QObject *parent)
     : QObject(parent), _queryService(queryService),
       _buckets(new TimeBucketModel(this)), _appTotals(new AppTotalsModel(this)),
+      _categoryTotals(new AppTotalsModel(this)),
       _sessions(new UserActivityModel(this)) {
   _refreshTimer = new QTimer(this);
   _refreshTimer->setSingleShot(true);
@@ -124,6 +125,10 @@ int ActivityQueryController::activeDayCount() const { return _activeDayCount; }
 bool ActivityQueryController::isEmpty() const {
   return _stats.sessionCount == 0;
 }
+bool ActivityQueryController::hasCategoryRules() const {
+  return !_queryService.categoryRules().isEmpty();
+}
+int ActivityQueryController::categoryCount() const { return _categoryCount; }
 
 int ActivityQueryController::dayCount() const {
   if (!_from.isValid() || !_to.isValid() || _from >= _to) {
@@ -139,6 +144,9 @@ qint64 ActivityQueryController::dailyAverageSeconds() const {
 TimeBucketModel *ActivityQueryController::buckets() const { return _buckets; }
 AppTotalsModel *ActivityQueryController::appTotals() const {
   return _appTotals;
+}
+AppTotalsModel *ActivityQueryController::categoryTotals() const {
+  return _categoryTotals;
 }
 UserActivityModel *ActivityQueryController::sessions() const {
   return _sessions;
@@ -324,6 +332,25 @@ void ActivityQueryController::refresh() {
 
   _sessions->setColorOrder(_colorOrder);
   _sessions->setActivities(_queryService.sessions(_from, _to, kSessionLimit));
+
+  // Shown through the same model as applications: a category row is a name,
+  // a time and a share. Colours follow rule order, so a category keeps its
+  // colour on every page; the unclaimed rest stays neutral.
+  QList<CategoryTotal> categories = _queryService.categoryTotals(_from, _to);
+  QList<AppTotal> categoryRows;
+  categoryRows.reserve(categories.size());
+  _categoryCount = 0;
+  for (CategoryTotal &category : categories) {
+    if (category.category.isEmpty()) {
+      category.category = tr("Uncategorized");
+    } else {
+      ++_categoryCount;
+    }
+    categoryRows.append({std::move(category.category), category.seconds,
+                         category.sessionCount});
+  }
+  _categoryTotals->setColorOrder(_queryService.categoryRules().categoryNames());
+  _categoryTotals->setTotals(std::move(categoryRows));
 
   emit dataChanged();
 }

@@ -14,6 +14,7 @@ constexpr auto kScheduleStart = "tracking/scheduleStartMinutes";
 constexpr auto kScheduleEnd = "tracking/scheduleEndMinutes";
 constexpr auto kScheduleDays = "tracking/scheduleDays";
 constexpr auto kLanguage = "general/language";
+constexpr auto kCategoryRules = "categories/rules";
 
 constexpr int kMinutesPerDay = 24 * 60;
 
@@ -47,6 +48,9 @@ AppSettings::AppSettings(QObject *parent)
       activity::TrackingSchedule::kEveryDay;
 
   _language = _store->value(kLanguage, QStringLiteral("system")).toString();
+
+  _categoryRules =
+      activity::parseCategoryRules(_store->value(kCategoryRules).toString());
 
   qCInfo(lcSettings) << "Settings loaded from" << _store->fileName();
 }
@@ -136,5 +140,23 @@ QString AppSettings::historyPath() const {
 }
 
 activity::TrackingSchedule AppSettings::schedule() const { return _schedule; }
+
+bool AppSettings::hasCategoryRules() const {
+  return _store->contains(QLatin1String(kCategoryRules));
+}
+
+const QList<activity::CategoryRule> &AppSettings::categoryRules() const {
+  return _categoryRules;
+}
+
+void AppSettings::setCategoryRules(const QList<activity::CategoryRule> &rules) {
+  if (_categoryRules == rules && hasCategoryRules()) {
+    return;
+  }
+  _categoryRules = rules;
+  store(QLatin1String(kCategoryRules), activity::serializeCategoryRules(rules));
+  qCInfo(lcSettings) << "Category rules saved:" << rules.size();
+  emit categoryRulesChanged();
+}
 
 } // namespace chronexa::core

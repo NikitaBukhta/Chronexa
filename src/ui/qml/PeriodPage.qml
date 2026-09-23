@@ -288,6 +288,21 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin: Theme.gapLoose
                 Layout.rightMargin: Theme.gapLoose
+                visible: root.query.hasCategoryRules && !root.query.empty
+                title: qsTr("What the time went on")
+                subtitle: qsTr("%n categories · rules are set in Settings", "", root.query.categoryCount)
+
+                AppShareList {
+                    Layout.fillWidth: true
+                    totalsModel: root.query.categoryTotals
+                    nameHeader: qsTr("Category")
+                }
+            }
+
+            Card {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.gapLoose
+                Layout.rightMargin: Theme.gapLoose
                 Layout.bottomMargin: Theme.gapLoose
                 title: qsTr("Where the time went")
                 subtitle: qsTr("%1 applications · the colours used across the app").arg(root.query.appCount)

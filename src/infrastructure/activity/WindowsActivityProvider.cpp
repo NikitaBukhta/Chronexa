@@ -192,20 +192,23 @@ void WindowsActivityProvider::poll() {
     return;
   }
 
-  // Keyed on the application alone, not on (app, title): a media player, a
-  // terminal printing progress or a browser tab with a countdown rewrites its
-  // title on every poll, and splitting the session there produced nothing but
-  // 1-second fragments that closeCurrentLocked discarded below the minimum --
-  // so those apps recorded no time at all. The title is descriptive, and
-  // follows the window it belongs to.
-  if (_hasCurrent && _current.appName == appName) {
+  // Keyed on the application and the session key, not on (app, title): a
+  // media player, a terminal printing progress or a browser tab with a
+  // countdown rewrites its title on every poll, and splitting the session there
+  // produced nothing but 1-second fragments that closeCurrentLocked discarded
+  // below the minimum -- so those apps recorded no time at all. The key is the
+  // title's category, so switching from a work tab to YouTube does split,
+  // while a ticking title stays one session. Otherwise the title is
+  // descriptive, and follows the window it belongs to.
+  const QString key = _sessionKey ? _sessionKey(appName, title) : QString();
+  if (_hasCurrent && _current.appName == appName && _currentKey == key) {
     _current.title = title;
     _current.endedOn = now;
     return;
   }
 
   closeCurrentLocked(now);
-  openCurrentLocked(appName, title, now);
+  openCurrentLocked(appName, title, key, now);
 }
 
 void WindowsActivityProvider::closeCurrentLocked(const QDateTime &at) {
@@ -219,19 +222,27 @@ void WindowsActivityProvider::closeCurrentLocked(const QDateTime &at) {
   }
 
   _current = Activity();
+  _currentKey.clear();
   _currentSince = QDateTime();
   _hasCurrent = false;
 }
 
 void WindowsActivityProvider::openCurrentLocked(const QString &appName,
                                                 const QString &title,
+                                                const QString &key,
                                                 const QDateTime &at) {
+  _currentKey = key;
   _current.appName = appName;
   _current.title = title;
   _current.startedOn = at;
   _current.endedOn = at;
   _currentSince = at;
   _hasCurrent = true;
+}
+
+void WindowsActivityProvider::setSessionKey(SessionKey key) {
+  QMutexLocker locker(&_mutex);
+  _sessionKey = std::move(key);
 }
 
 QList<Activity> WindowsActivityProvider::drainEvents() {

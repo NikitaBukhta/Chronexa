@@ -23,10 +23,16 @@ class TestCommand(Command):
         env["QT_PLUGIN_PATH"] = str(self.config.qt_plugin_dir)
         env["QT_QPA_PLATFORM"] = "offscreen"
 
+        # ctest ships next to the venv's cmake; a bare "ctest" is only found
+        # when some other CMake happens to be on PATH.
+        ctest = self.config.venv_executable("ctest")
+        if not ctest.exists():
+            ctest = "ctest"
+
         print(f"\n=== Running tests ({self.config.build_type}) ===")
         result = subprocess.run(
             [
-                "ctest",
+                str(ctest),
                 "--test-dir", str(build_root),
                 "--output-on-failure",
                 "-C", self.config.build_type,

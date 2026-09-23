@@ -9,7 +9,7 @@ project(Chronexa VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Sql LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Sql Test LinguistTools)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -33,6 +33,8 @@ qt_add_executable(Chronexa
     src/domain/activity/ActivityStats.cpp
     src/domain/activity/TrackingSchedule.hpp
     src/domain/activity/TrackingSchedule.cpp
+    src/domain/activity/CategoryRules.hpp
+    src/domain/activity/CategoryRules.cpp
 
     src/application/activity/ActivityService.hpp
     src/application/activity/ActivityService.cpp
@@ -56,6 +58,8 @@ qt_add_executable(Chronexa
     src/ui/activity/ActivityQueryController.cpp
     src/ui/activity/AppTotalsModel.hpp
     src/ui/activity/AppTotalsModel.cpp
+    src/ui/activity/CategoryRulesModel.hpp
+    src/ui/activity/CategoryRulesModel.cpp
     src/ui/activity/TimeBucketModel.hpp
     src/ui/activity/TimeBucketModel.cpp
     src/ui/activity/UserActivityController.hpp
@@ -171,3 +175,9 @@ install(TARGETS Chronexa
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+option(BUILD_TESTS "Build unit tests" ON)
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()

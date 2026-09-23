@@ -20,6 +20,8 @@ public:
                            int limit = -1) const override;
   QList<AppTotal> appTotals(const QDateTime &from,
                             const QDateTime &to) const override;
+  QList<TitleTotal> titleTotals(const QDateTime &from,
+                                const QDateTime &to) const override;
   QList<Interval> intervals(const QDateTime &from,
                             const QDateTime &to) const override;
   RangeStats stats(const QDateTime &from, const QDateTime &to) const override;

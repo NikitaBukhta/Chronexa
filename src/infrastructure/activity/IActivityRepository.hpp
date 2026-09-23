@@ -25,6 +25,12 @@ public:
   virtual QList<AppTotal> appTotals(const QDateTime &from,
                                     const QDateTime &to) const = 0;
 
+  // Time per distinct (app, title) pair, clipped to the range. The raw
+  // material for categories, which are resolved from rules at read time so a
+  // rule edit applies to the whole history at once.
+  virtual QList<TitleTotal> titleTotals(const QDateTime &from,
+                                        const QDateTime &to) const = 0;
+
   virtual QList<Interval> intervals(const QDateTime &from,
                                     const QDateTime &to) const = 0;
 

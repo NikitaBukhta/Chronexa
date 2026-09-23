@@ -1,5 +1,6 @@
 #pragma once
 
+#include "domain/activity/CategoryRules.hpp"
 #include "domain/activity/TrackingSchedule.hpp"
 
 #include <QObject>
@@ -54,10 +55,17 @@ public:
 
   activity::TrackingSchedule schedule() const;
 
+  // False until rules were saved once, so first-run defaults can be told
+  // apart from a list the user emptied on purpose.
+  bool hasCategoryRules() const;
+  const QList<activity::CategoryRule> &categoryRules() const;
+  void setCategoryRules(const QList<activity::CategoryRule> &rules);
+
 signals:
   void trackingEnabledChanged();
   void scheduleChanged();
   void languageChanged();
+  void categoryRulesChanged();
 
 private:
   void store(const QString &key, const QVariant &value);
@@ -67,6 +75,7 @@ private:
   bool _trackingEnabled = true;
   activity::TrackingSchedule _schedule;
   QString _language;
+  QList<activity::CategoryRule> _categoryRules;
 };
 
 } // namespace chronexa::core

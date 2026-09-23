@@ -37,6 +37,24 @@ QStringList ActivityQueryService::rankedAppNames(int limit) const {
   return _repository.rankedAppNames(limit);
 }
 
+void ActivityQueryService::setCategoryRules(CategoryRules rules) {
+  _categoryRules = std::move(rules);
+}
+
+const CategoryRules &ActivityQueryService::categoryRules() const {
+  return _categoryRules;
+}
+
+QList<CategoryTotal>
+ActivityQueryService::categoryTotals(const QDateTime &from,
+                                     const QDateTime &to) const {
+  if (_categoryRules.isEmpty()) {
+    return {};
+  }
+  return activity::categoryTotals(_repository.titleTotals(from, to),
+                                  _categoryRules);
+}
+
 QList<BucketTotal>
 ActivityQueryService::buckets(const QDateTime &from, const QDateTime &to,
                               Granularity granularity) const {

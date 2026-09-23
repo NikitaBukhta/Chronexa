@@ -99,6 +99,19 @@ void ActivityService::setSchedule(const TrackingSchedule &schedule) {
 
 TrackingSchedule ActivityService::schedule() const { return _schedule; }
 
+void ActivityService::setCategoryRules(const QList<CategoryRule> &rules) {
+  if (!_activityProvider) {
+    return;
+  }
+  // The key runs on the provider's polling path. It gets rules compiled just
+  // for it, so no QRegularExpression is shared with this thread.
+  _activityProvider->setSessionKey(
+      [compiled = CategoryRules(rules)](const QString &appName,
+                                        const QString &title) {
+        return compiled.categorize(appName, title);
+      });
+}
+
 bool ActivityService::isTracking() const {
   return _activityProvider && _activityProvider->isRunning();
 }

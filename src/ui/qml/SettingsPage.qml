@@ -130,6 +130,19 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin: Theme.gapLoose
                 Layout.rightMargin: Theme.gapLoose
+                title: qsTr("Categories")
+                subtitle: qsTr("The first matching rule decides, so put narrow rules (YouTube in a browser) above broad ones.")
+
+                CategoryRuleList {
+                    Layout.fillWidth: true
+                    rulesModel: categoryRules
+                }
+            }
+
+            Card {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.gapLoose
+                Layout.rightMargin: Theme.gapLoose
                 title: qsTr("Start-up")
 
                 SettingRow {
