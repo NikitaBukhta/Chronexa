@@ -125,6 +125,69 @@ int UserActivityController::applyPrivacyToHistory() {
   return _service != nullptr ? _service->applyPrivacyToHistory() : -1;
 }
 
+namespace {
+
+Activity sessionOf(const QString &appName, const QString &title,
+                   const QDateTime &from, const QDateTime &to) {
+  Activity session;
+  session.appName = appName;
+  session.title = title;
+  session.startedOn = from;
+  session.endedOn = to;
+  return session;
+}
+
+} // namespace
+
+QString UserActivityController::editResultText(EditResult result) const {
+  switch (result) {
+  case EditResult::Done:
+    return {};
+  case EditResult::Invalid:
+    return tr("Enter the application name.");
+  case EditResult::Excluded:
+    return tr("Your privacy rules exclude this window, so it cannot be "
+              "stored.");
+  case EditResult::Failed:
+    break;
+  }
+  return tr("The history could not be changed.");
+}
+
+QString UserActivityController::editSession(
+    const QString &appName, const QString &title, const QDateTime &from,
+    const QDateTime &to, const QString &newAppName, const QString &newTitle,
+    const QString &categoryMode, const QString &category) {
+  if (_service == nullptr) {
+    return editResultText(EditResult::Failed);
+  }
+
+  SessionEdit edit;
+  edit.appName = newAppName;
+  edit.title = newTitle;
+  if (categoryMode == QStringLiteral("none")) {
+    edit.category = QStringLiteral("");
+  } else if (categoryMode == QStringLiteral("set")) {
+    edit.category = category;
+  }
+  return editResultText(
+      _service->editSession(sessionOf(appName, title, from, to), edit));
+}
+
+QString UserActivityController::cutSession(
+    const QString &appName, const QString &title, const QDateTime &from,
+    const QDateTime &to, const QDateTime &cutFrom, const QDateTime &cutTo) {
+  if (_service == nullptr) {
+    return editResultText(EditResult::Failed);
+  }
+  const EditResult result =
+      _service->cutSession(sessionOf(appName, title, from, to), cutFrom, cutTo);
+  if (result == EditResult::Invalid) {
+    return tr("Choose a time inside the session.");
+  }
+  return editResultText(result);
+}
+
 QString UserActivityController::formatDuration(qint64 seconds,
                                                bool compact) const {
   return format::duration(seconds, compact);

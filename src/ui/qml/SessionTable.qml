@@ -7,16 +7,15 @@ Item {
     property var sessionModel: null
     property string filter: ""
     property bool showDay: false
+    property bool editable: false
 
-    // Columns come from one shared set of x/width values: letting every row lay
-    // itself out makes them drift with the length of the text inside them.
+    signal editRequested(var session)
+
     readonly property int edge: 2
     readonly property int columnGap: Theme.gap
     readonly property int whenWidth: showDay ? 156 : 112
     readonly property int durationWidth: 76
-    // What is left for the two text columns. They split it rather than taking
-    // fixed widths: in a half-width card at 125% scaling the fixed sum was
-    // wider than the card and pushed Duration past its right edge.
+
     readonly property int flexibleWidth: Math.max(0, width - edge * 2 - whenWidth - durationWidth - columnGap * 3)
     readonly property int appWidth: Math.min(176, Math.round(flexibleWidth / 2))
     readonly property int windowWidth: Math.max(0, flexibleWidth - appWidth)
@@ -105,6 +104,10 @@ Item {
             required property string endedText
             required property string dayText
             required property int colorSlot
+            required property date startedOn
+            required property date endedOn
+            required property string category
+            required property string categoryMode
 
             readonly property bool matches: root.filter === "" || appName.toLowerCase().includes(root.filter.toLowerCase()) || title.toLowerCase().includes(root.filter.toLowerCase())
 
@@ -116,6 +119,24 @@ Item {
 
             HoverHandler {
                 id: hover
+
+                cursorShape: root.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
+            }
+
+            TapHandler {
+                enabled: root.editable
+                onTapped: root.editRequested({
+                    appName: row.appName,
+                    title: row.title,
+                    startedOn: row.startedOn,
+                    endedOn: row.endedOn,
+                    durationText: row.durationText,
+                    startedText: row.startedText,
+                    endedText: row.endedText,
+                    dayText: row.dayText,
+                    category: row.category,
+                    categoryMode: row.categoryMode
+                })
             }
 
             Text {

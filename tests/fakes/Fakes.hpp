@@ -115,6 +115,33 @@ public:
     return changed;
   }
 
+  struct EditCall {
+    WindowRef window;
+    QDateTime from;
+    QDateTime to;
+    SessionEdit edit;
+  };
+  struct CutCall {
+    WindowRef window;
+    QDateTime from;
+    QDateTime to;
+  };
+  QList<EditCall> edits;
+  QList<CutCall> cuts;
+  // What editSessions()/cutSessions() report; -1 is a failed write.
+  int editResult = 1;
+
+  int editSessions(const WindowRef &window, const QDateTime &from,
+                   const QDateTime &to, const SessionEdit &edit) override {
+    edits.append({window, from, to, edit});
+    return editResult;
+  }
+  int cutSessions(const WindowRef &window, const QDateTime &from,
+                  const QDateTime &to) override {
+    cuts.append({window, from, to});
+    return editResult;
+  }
+
   QList<Activity> sessions(const QDateTime &, const QDateTime &,
                            int) const override {
     return inserted;
@@ -176,8 +203,8 @@ public:
 };
 
 inline QDateTime utc(int hour, int minute, int second = 0) {
-  return QDateTime(QDate(2026, 9, 1), QTime(hour, minute, second),
-                   QTimeZone::UTC);
+  return {QDate(2026, 9, 1), QTime(hour, minute, second),
+                   QTimeZone::UTC};
 }
 
 } // namespace chronexa::activity::testing

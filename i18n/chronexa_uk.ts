@@ -221,6 +221,10 @@
         <source>Sessions</source>
         <translation>Сеанси</translation>
     </message>
+    <message>
+        <source>%1 · click a session to correct it</source>
+        <translation>%1 · натисніть на сеанс, щоб виправити його</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
@@ -578,6 +582,73 @@
     </message>
 </context>
 <context>
+    <name>SessionEditor</name>
+    <message>
+        <source>Edit session</source>
+        <translation>Редагування сеансу</translation>
+    </message>
+    <message>
+        <source>Application</source>
+        <translation>Програма</translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation>Вікно</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Категорія</translation>
+    </message>
+    <message>
+        <source>By rules: %1</source>
+        <translation>За правилами: %1</translation>
+    </message>
+    <message>
+        <source>By rules</source>
+        <translation>За правилами</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>Без категорії</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Скасувати</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Зберегти</translation>
+    </message>
+    <message>
+        <source>Remove time</source>
+        <translation>Прибрати час</translation>
+    </message>
+    <message>
+        <source>For when the tracker kept counting after you left: the chosen stretch is taken out of this session and of every total.</source>
+        <translation>Якщо трекер рахував далі, коли вас не було: вибраний відрізок прибирається з цього сеансу та з усіх підсумків.</translation>
+    </message>
+    <message>
+        <source>From</source>
+        <translation>З</translation>
+    </message>
+    <message>
+        <source>To</source>
+        <translation>До</translation>
+    </message>
+    <message>
+        <source>Click again to delete</source>
+        <translation>Натисніть ще раз, щоб видалити</translation>
+    </message>
+    <message>
+        <source>Delete session</source>
+        <translation>Видалити сеанс</translation>
+    </message>
+    <message>
+        <source>Remove this time</source>
+        <translation>Прибрати цей відрізок</translation>
+    </message>
+</context>
+<context>
     <name>SessionTable</name>
     <message>
         <source>When</source>
@@ -828,6 +899,22 @@
     <message>
         <source>Resumes %1 at %2</source>
         <translation>Відновиться %1 о %2</translation>
+    </message>
+    <message>
+        <source>Enter the application name.</source>
+        <translation>Введіть назву програми.</translation>
+    </message>
+    <message>
+        <source>Your privacy rules exclude this window, so it cannot be stored.</source>
+        <translation>Ваші правила приватності виключають це вікно, тож його не можна зберегти.</translation>
+    </message>
+    <message>
+        <source>The history could not be changed.</source>
+        <translation>Не вдалося змінити історію.</translation>
+    </message>
+    <message>
+        <source>Choose a time inside the session.</source>
+        <translation>Виберіть час у межах сеансу.</translation>
     </message>
 </context>
 <context>

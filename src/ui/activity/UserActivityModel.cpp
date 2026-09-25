@@ -46,6 +46,12 @@ QVariant UserActivityModel::data(const QModelIndex &index, int role) const {
     return format::dayLabel(activity.startedOn.date());
   case ColorSlotRole:
     return _colorOrder.indexOf(activity.appName);
+  case CategoryRole:
+    return _categories.value(row);
+  case CategoryModeRole:
+    return !activity.category             ? QStringLiteral("auto")
+           : activity.category->isEmpty() ? QStringLiteral("none")
+                                          : QStringLiteral("set");
   default:
     return {};
   }
@@ -63,12 +69,16 @@ QHash<int, QByteArray> UserActivityModel::roleNames() const {
       {EndedTextRole, "endedText"},
       {DayTextRole, "dayText"},
       {ColorSlotRole, "colorSlot"},
+      {CategoryRole, "category"},
+      {CategoryModeRole, "categoryMode"},
   };
 }
 
-void UserActivityModel::setActivities(QList<Activity> activities) {
+void UserActivityModel::setActivities(QList<Activity> activities,
+                                      QStringList categories) {
   beginResetModel();
   _activities = std::move(activities);
+  _categories = std::move(categories);
   endResetModel();
   emit countChanged();
 }
@@ -89,6 +99,7 @@ void UserActivityModel::clear() {
   }
   beginResetModel();
   _activities.clear();
+  _categories.clear();
   endResetModel();
   emit countChanged();
 }

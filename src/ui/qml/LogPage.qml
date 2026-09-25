@@ -78,7 +78,7 @@ Item {
             }
 
             Text {
-                text: root.query.empty ? qsTr("No sessions") : qsTr("%1 sessions · %2").arg(root.query.sessionCount).arg(activityController.formatDuration(root.query.totalSeconds, true))
+                text: root.query.empty ? qsTr("No sessions") : qsTr("%1 sessions · %2").arg(root.query.sessions.count).arg(activityController.formatDuration(root.query.totalSeconds, true))
                 color: Theme.inkMuted
                 font.pixelSize: Theme.fontLabel
             }
@@ -88,7 +88,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             title: qsTr("Sessions")
-            subtitle: root.query.rangeLabel
+            subtitle: qsTr("%1 · click a session to correct it").arg(root.query.rangeLabel)
 
             SessionTable {
                 Layout.fillWidth: true
@@ -96,7 +96,19 @@ Item {
                 sessionModel: root.query.sessions
                 filter: search.text
                 showDay: true
+                editable: true
+                onEditRequested: function (session) {
+                    editor.openFor(session);
+                }
             }
         }
+    }
+
+    SessionEditor {
+        id: editor
+
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        categoryNames: root.query.categoryNames
     }
 }

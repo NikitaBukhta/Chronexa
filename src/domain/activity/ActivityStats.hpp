@@ -3,6 +3,8 @@
 #include <QDateTime>
 #include <QString>
 
+#include <optional>
+
 namespace chronexa::activity {
 
 enum class Granularity { Hour, Day, Week, Month };
@@ -22,14 +24,12 @@ struct AppTotal {
   int sessionCount = 0;
 };
 
-// Time spent under one exact window title of one application. Kept in
-// milliseconds: it is an intermediate that gets summed again (into categories),
-// and rounding here would lose up to a second per distinct title.
 struct TitleTotal {
   QString appName;
   QString title;
   qint64 milliseconds = 0;
   int sessionCount = 0;
+  std::optional<QString> category;
 };
 
 struct BucketTotal {

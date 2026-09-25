@@ -14,6 +14,7 @@ class AppSettings;
 namespace chronexa::activity {
 
 class ActivityService;
+enum class EditResult;
 
 class UserActivityController : public QObject {
   Q_OBJECT
@@ -41,34 +42,45 @@ public:
   UserActivityController(ActivityService *service, core::AppSettings *settings,
                          QObject *parent = nullptr);
 
-  bool isTrackingEnabled() const;
+  [[nodiscard]] bool isTrackingEnabled() const;
   void setTrackingEnabled(bool enabled);
-  bool isTracking() const;
-  bool isHeldBySchedule() const;
+  [[nodiscard]] bool isTracking() const;
+  [[nodiscard]] bool isHeldBySchedule() const;
 
-  QString scheduleHoldText() const;
+  [[nodiscard]] QString scheduleHoldText() const;
 
-  bool isIdle() const;
-  bool hasCurrent() const;
-  QString currentAppName() const;
-  QString currentTitle() const;
-  qint64 currentSeconds() const;
-  QString currentSecondsText() const;
+  [[nodiscard]] bool isIdle() const;
+  [[nodiscard]] bool hasCurrent() const;
+  [[nodiscard]] QString currentAppName() const;
+  [[nodiscard]] QString currentTitle() const;
+  [[nodiscard]] qint64 currentSeconds() const;
+  [[nodiscard]] QString currentSecondsText() const;
 
   Q_INVOKABLE void toggleTracking();
   Q_INVOKABLE void clearActivities();
-  // Sessions changed, or -1 when the history could not be written.
   Q_INVOKABLE int applyPrivacyToHistory();
-
-  Q_INVOKABLE QString formatDuration(qint64 seconds,
-                                     bool compact = false) const;
-  Q_INVOKABLE QString formatClock(const QDateTime &moment) const;
-  Q_INVOKABLE QString formatDayLabel(const QDate &date) const;
+  Q_INVOKABLE QString editSession(const QString &appName, const QString &title,
+                                  const QDateTime &from, const QDateTime &to,
+                                  const QString &newAppName,
+                                  const QString &newTitle,
+                                  const QString &categoryMode,
+                                  const QString &category);
+  Q_INVOKABLE QString cutSession(const QString &appName, const QString &title,
+                                 const QDateTime &from, const QDateTime &to,
+                                 const QDateTime &cutFrom,
+                                 const QDateTime &cutTo);
+  Q_INVOKABLE [[nodiscard]] QString formatDuration(qint64 seconds,
+                                                   bool compact = false) const;
+  Q_INVOKABLE [[nodiscard]] QString formatClock(const QDateTime &moment) const;
+  Q_INVOKABLE [[nodiscard]] QString formatDayLabel(const QDate &date) const;
 
 signals:
   void trackingChanged();
   void currentActivityChanged();
   void historyChanged();
+
+private:
+  [[nodiscard]] QString editResultText(EditResult result) const;
 
 private:
   ActivityService *_service;

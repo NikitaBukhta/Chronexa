@@ -83,9 +83,18 @@ hidden title is stored as `''` (never NULL -- the column is `NOT NULL`). The DB
 runs with `secure_delete` and checkpoints the WAL after a clear or redaction,
 so removed text does not linger in the files.
 
-The `activity` table is `(id, app_name, title, started_on, ended_on)` with
-`started_on`/`ended_on` as **epoch milliseconds**, indexed by
-`(ended_on, started_on)` and by `app_name`.
+The `activity` table is `(id, app_name, title, started_on, ended_on,
+category)` with `started_on`/`ended_on` as **epoch milliseconds**, indexed by
+`(ended_on, started_on)` and by `app_name`. `category` is a hand-set override
+from the log: NULL = the rules decide, `''` = deliberately none. Older files
+get the column in `SqliteActivityRepository::migrate()`, guarded by
+`PRAGMA user_version` (now 1).
+
+Every minute's flush cuts the open session, so one stretch in one window is
+stored as a chain of touching rows. `ActivityQueryService::sessions()` joins
+them back (`joinContiguous`); log edits address a whole joined session through
+its window and time span, never a single row. `stats()` still counts rows, so
+"sessions" and "longest session" there are per flush cut.
 
 ## Known landmines
 
@@ -107,6 +116,12 @@ The `activity` table is `(id, app_name, title, started_on, ended_on)` with
   (`tests/e2e/`, ctest label `e2e`) drives the real app and takes the
   foreground, so `test` skips it; run it with `python bootstrap.py e2e`, not
   while typing. See `/test`.
+- **UI tests without the desktop**: `tst_SessionEditing` loads the real
+  `LogPage.qml` offscreen over the real stack and clicks it with `QTest`. The
+  module's qmldir prefers `qrc:/qt/qml/Chronexa/`, which only the exe has, so
+  a `QQmlAbstractUrlInterceptor` serves the sources instead. Set
+  `CHRONEXA_UI_SHOTS=<dir>` (plus `QT_QPA_FONTDIR=C:/Windows/Fonts`, offscreen
+  has no fonts) to get a PNG of every step.
 - **`--profile <dir>`** makes Chronexa keep history, logs and settings (INI
   instead of the registry) in `<dir>`. Use it for any scripted run, so real
   history is never touched.

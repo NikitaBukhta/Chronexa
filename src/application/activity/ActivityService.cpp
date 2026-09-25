@@ -178,6 +178,63 @@ int ActivityService::applyPrivacyToHistory() {
   return changed;
 }
 
+EditResult ActivityService::editSession(const Activity &session,
+                                        const SessionEdit &edit) {
+  SessionEdit change = edit.normalized();
+  if (!session.isValid() || !change.isValid()) {
+    return EditResult::Invalid;
+  }
+
+  // The rules keep a name out of the history however it would get there.
+  switch (_privacy.classify(change.appName, change.title)) {
+  case Privacy::Exclude:
+    qCInfo(lcActivity) << "Session edit refused: the new name is excluded";
+    return EditResult::Excluded;
+  case Privacy::HideTitle:
+    change.title = QStringLiteral("");
+    break;
+  case Privacy::Record:
+    break;
+  }
+
+  const int changed =
+      _repository.editSessions({session.appName, session.title},
+                               session.startedOn, session.endedOn, change);
+  if (changed <= 0) {
+    qCWarning(lcActivity) << "Session edit not stored, rows changed:"
+                          << changed;
+    return EditResult::Failed;
+  }
+
+  qCInfo(lcActivity) << "Session edited:" << changed << "rows";
+  emit activityRecorded();
+  return EditResult::Done;
+}
+
+EditResult ActivityService::cutSession(const Activity &session,
+                                       const QDateTime &from,
+                                       const QDateTime &to) {
+  if (!session.isValid() || !from.isValid() || !to.isValid()) {
+    return EditResult::Invalid;
+  }
+  const QDateTime cutFrom = qMax(from, session.startedOn);
+  const QDateTime cutTo = qMin(to, session.endedOn);
+  if (cutFrom >= cutTo) {
+    return EditResult::Invalid;
+  }
+
+  const int changed =
+      _repository.cutSessions({session.appName, session.title}, cutFrom, cutTo);
+  if (changed <= 0) {
+    qCWarning(lcActivity) << "Session cut not stored, rows changed:" << changed;
+    return EditResult::Failed;
+  }
+
+  qCInfo(lcActivity) << "Cut" << cutFrom.secsTo(cutTo) << "s from a session";
+  emit activityRecorded();
+  return EditResult::Done;
+}
+
 void ActivityService::redactPending() {
   if (_privacy.isEmpty() || _pending.isEmpty()) {
     return;

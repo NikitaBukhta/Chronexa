@@ -47,6 +47,7 @@ private slots:
   void parseToleratesGarbage();
 
   void categoryTotalsAggregates();
+  void categoryTotalsPreferManualCategory();
   void categoryTotalsRoundsOnce();
   void categoryTotalsWithoutRules();
 };
@@ -231,6 +232,31 @@ void TestCategoryRules::categoryTotalsAggregates() {
            "the uncategorized rest comes last even when it is the largest");
   QCOMPARE(totals.at(3).seconds, 500);
   QCOMPARE(totals.at(3).sessionCount, 4);
+}
+
+void TestCategoryRules::categoryTotalsPreferManualCategory() {
+  TitleTotal learning{QStringLiteral("Google Chrome"),
+                      QStringLiteral("YouTube"), 60'000, 1};
+  learning.category = QStringLiteral("Learning");
+  TitleTotal none{QStringLiteral("CLion"), QStringLiteral("a.cpp"), 30'000, 1};
+  none.category = QStringLiteral("");
+  const QList<TitleTotal> titles = {
+      learning,
+      none,
+      TitleTotal{QStringLiteral("Google Chrome"), QStringLiteral("YouTube"),
+                 20'000, 1},
+  };
+
+  const QList<CategoryTotal> totals = categoryTotals(titles, sampleRules());
+
+  QCOMPARE(totals.size(), 3);
+  QCOMPARE(totals.at(0).category, QStringLiteral("Learning"));
+  QCOMPARE(totals.at(0).seconds, 60);
+  QVERIFY2(totals.at(1).category == QStringLiteral("Distractions") &&
+               totals.at(1).seconds == 20,
+           "the rest of the same window still follows the rules");
+  QVERIFY2(totals.at(2).category.isEmpty() && totals.at(2).seconds == 30,
+           "'no category' by hand beats the CLion -> Work rule");
 }
 
 void TestCategoryRules::categoryTotalsRoundsOnce() {

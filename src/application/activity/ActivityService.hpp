@@ -14,6 +14,13 @@
 
 namespace chronexa::activity {
 
+enum class EditResult {
+  Done,
+  Invalid,
+  Excluded,
+  Failed,
+};
+
 class ActivityService : public QObject {
   Q_OBJECT
 
@@ -38,6 +45,10 @@ public:
   void setPrivacyRules(const QList<PrivacyRule> &rules);
 
   int applyPrivacyToHistory();
+
+  EditResult editSession(const Activity &session, const SessionEdit &edit);
+  EditResult cutSession(const Activity &session, const QDateTime &from,
+                        const QDateTime &to);
 
   [[nodiscard]] bool isTracking() const;
   [[nodiscard]] bool isHeldBySchedule() const;
@@ -69,7 +80,6 @@ private:
   IActivityRepository &_repository;
   std::unique_ptr<IUserActivityProvider> _activityProvider;
 
-  // Drained from the provider but not yet accepted by the repository.
   QList<Activity> _pending;
 
   bool _trackingEnabled = true;

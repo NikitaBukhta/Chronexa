@@ -16,7 +16,7 @@ ActivityQueryService::ActivityQueryService(IActivityRepository &repository)
 QList<Activity> ActivityQueryService::sessions(const QDateTime &from,
                                                const QDateTime &to,
                                                int limit) const {
-  return _repository.sessions(from, to, limit);
+  return joinContiguous(_repository.sessions(from, to, limit));
 }
 
 QList<AppTotal> ActivityQueryService::appTotals(const QDateTime &from,
@@ -43,6 +43,13 @@ void ActivityQueryService::setCategoryRules(CategoryRules rules) {
 
 const CategoryRules &ActivityQueryService::categoryRules() const {
   return _categoryRules;
+}
+
+QString ActivityQueryService::categoryOf(const Activity &session) const {
+  if (session.category) {
+    return *session.category;
+  }
+  return _categoryRules.categorize(session.appName, session.title);
 }
 
 QList<CategoryTotal>

@@ -5,6 +5,10 @@ function(chronexa_add_test name)
     add_test(NAME ${name} COMMAND ${name})
 endfunction()
 
+chronexa_add_test(tst_Activity
+    ${CMAKE_SOURCE_DIR}/src/domain/activity/Activity.cpp
+)
+
 chronexa_add_test(tst_CategoryRules
     ${CMAKE_SOURCE_DIR}/src/domain/activity/CategoryRules.cpp
     ${CMAKE_SOURCE_DIR}/src/domain/activity/WindowMatcher.cpp
@@ -23,6 +27,7 @@ target_link_libraries(tst_SqliteActivityRepository PRIVATE Qt6::Sql)
 
 chronexa_add_test(tst_ActivityQueryService
     ${CMAKE_SOURCE_DIR}/src/application/activity/ActivityQueryService.cpp
+    ${CMAKE_SOURCE_DIR}/src/domain/activity/Activity.cpp
     ${CMAKE_SOURCE_DIR}/src/domain/activity/ActivityStats.cpp
     ${CMAKE_SOURCE_DIR}/src/domain/activity/CategoryRules.cpp
     ${CMAKE_SOURCE_DIR}/src/domain/activity/WindowMatcher.cpp
@@ -73,6 +78,38 @@ chronexa_add_test(tst_ActivityService
     ${CMAKE_SOURCE_DIR}/src/domain/activity/TrackingSchedule.cpp
 )
 target_link_libraries(tst_ActivityService PRIVATE user32 version)
+
+# The log's session editor: the real QML over the real stack, headless. The
+# QML comes from the module directory the Chronexa target writes, so the app
+# is built first.
+chronexa_add_test(tst_SessionEditing
+    ${CMAKE_SOURCE_DIR}/src/ui/activity/ActivityQueryController.cpp
+    ${CMAKE_SOURCE_DIR}/src/ui/activity/UserActivityController.cpp
+    ${CMAKE_SOURCE_DIR}/src/ui/activity/UserActivityModel.cpp
+    ${CMAKE_SOURCE_DIR}/src/ui/activity/AppTotalsModel.cpp
+    ${CMAKE_SOURCE_DIR}/src/ui/activity/TimeBucketModel.cpp
+    ${CMAKE_SOURCE_DIR}/src/ui/activity/ActivityFormat.cpp
+    ${CMAKE_SOURCE_DIR}/src/application/activity/ActivityQueryService.cpp
+    ${CMAKE_SOURCE_DIR}/src/application/activity/ActivityService.cpp
+    ${CMAKE_SOURCE_DIR}/src/infrastructure/activity/SqliteActivityRepository.cpp
+    ${CMAKE_SOURCE_DIR}/src/infrastructure/activity/PollingActivityProvider.cpp
+    ${CMAKE_SOURCE_DIR}/src/infrastructure/activity/WindowsForegroundProbe.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/AppSettings.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/AppEnvironment.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/FileLogger.cpp
+    ${CMAKE_SOURCE_DIR}/src/domain/activity/Activity.cpp
+    ${CMAKE_SOURCE_DIR}/src/domain/activity/ActivityStats.cpp
+    ${CMAKE_SOURCE_DIR}/src/domain/activity/CategoryRules.cpp
+    ${CMAKE_SOURCE_DIR}/src/domain/activity/PrivacyRules.cpp
+    ${CMAKE_SOURCE_DIR}/src/domain/activity/WindowMatcher.cpp
+    ${CMAKE_SOURCE_DIR}/src/domain/activity/TrackingSchedule.cpp
+)
+target_link_libraries(tst_SessionEditing PRIVATE
+    Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::Sql user32 version)
+target_compile_definitions(tst_SessionEditing PRIVATE
+    CHRONEXA_QML_IMPORT_DIR="${CMAKE_BINARY_DIR}"
+    CHRONEXA_QML_SOURCE_DIR="${CMAKE_SOURCE_DIR}/src/ui/qml")
+add_dependencies(tst_SessionEditing Chronexa)
 
 # End-to-end: drives the real app and takes the foreground, so it is labelled
 # and left out of `bootstrap.py test`; run it with `bootstrap.py e2e`.

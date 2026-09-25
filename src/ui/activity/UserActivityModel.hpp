@@ -24,16 +24,18 @@ public:
     EndedTextRole,
     DayTextRole,
     ColorSlotRole,
+    CategoryRole,
+    CategoryModeRole,
   };
 
   explicit UserActivityModel(QObject *parent = nullptr);
 
-  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-  QVariant data(const QModelIndex &index,
-                int role = Qt::DisplayRole) const override;
-  QHash<int, QByteArray> roleNames() const override;
-
-  void setActivities(QList<Activity> activities);
+  [[nodiscard]] int
+  rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  [[nodiscard]] QVariant data(const QModelIndex &index,
+                              int role = Qt::DisplayRole) const override;
+  [[nodiscard]] QHash<int, QByteArray> roleNames() const override;
+  void setActivities(QList<Activity> activities, QStringList categories = {});
 
   void setColorOrder(const QStringList &appNames);
 
@@ -45,6 +47,7 @@ signals:
 
 private:
   QList<Activity> _activities;
+  QStringList _categories;
   QStringList _colorOrder;
 };
 

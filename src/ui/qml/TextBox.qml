@@ -8,6 +8,8 @@ Rectangle {
     property string placeholder: ""
     property bool invalid: false
 
+    readonly property alias text: field.text
+
     signal edited(string value)
 
     implicitWidth: 140

@@ -50,6 +50,14 @@ private slots:
   void applyPrivacyToHistoryRedactsWhatIsStored();
   void applyPrivacyToHistoryReportsFailure();
   void privateWindowsNeverReachTheRepository();
+
+  void editIsStoredAndAnnounced();
+  void editWithoutApplicationIsRefused();
+  void editIntoExcludedWindowIsRefused();
+  void editIntoHiddenTitleIsStoredHidden();
+  void failedEditIsReported();
+  void cutIsClippedToTheSession();
+  void cutOutsideTheSessionIsRefused();
 };
 
 void TestActivityService::startsTheProviderWhenTrackingIsOn() {
@@ -302,6 +310,132 @@ void TestActivityService::privateWindowsNeverReachTheRepository() {
            QStringLiteral("Telegram Desktop"));
   QCOMPARE(repository.inserted.at(1).title, QString());
   QCOMPARE(repository.inserted.at(1).durationSeconds(), 6);
+}
+
+void TestActivityService::editIsStoredAndAnnounced() {
+  FakeActivityRepository repository;
+  ActivityService service(repository,
+                          std::make_unique<MockActivityProvider>());
+  QSignalSpy recorded(&service, &ActivityService::activityRecorded);
+
+  const Activity shown = session(QStringLiteral("Google Chrome"), 0, 45);
+  QCOMPARE(service.editSession(shown, SessionEdit{QStringLiteral(" Chrome "),
+                                                  QStringLiteral(" Course "),
+                                                  QStringLiteral(" Learning ")}),
+           EditResult::Done);
+
+  QCOMPARE(repository.edits.size(), 1);
+  const auto &call = repository.edits.first();
+  QCOMPARE(call.window.appName, QStringLiteral("Google Chrome"));
+  QCOMPARE(call.from, utc(10, 0));
+  QCOMPARE(call.to, utc(10, 45));
+  QCOMPARE(call.edit.appName, QStringLiteral("Chrome"));
+  QCOMPARE(call.edit.title, QStringLiteral("Course"));
+  QCOMPARE(call.edit.category,
+           std::optional<QString>(QStringLiteral("Learning")));
+  QVERIFY2(recorded.count() == 1, "the views refresh after an edit");
+}
+
+void TestActivityService::editWithoutApplicationIsRefused() {
+  FakeActivityRepository repository;
+  ActivityService service(repository,
+                          std::make_unique<MockActivityProvider>());
+
+  QCOMPARE(service.editSession(session(QStringLiteral("CLion"), 0, 5),
+                               SessionEdit{QStringLiteral("  "),
+                                           QStringLiteral("a"), std::nullopt}),
+           EditResult::Invalid);
+  Activity backwards = session(QStringLiteral("CLion"), 5, 0);
+  QCOMPARE(service.editSession(backwards, SessionEdit{QStringLiteral("CLion"),
+                                                      {}, std::nullopt}),
+           EditResult::Invalid);
+  QVERIFY(repository.edits.isEmpty());
+}
+
+void TestActivityService::editIntoExcludedWindowIsRefused() {
+  FakeActivityRepository repository;
+  ActivityService service(repository,
+                          std::make_unique<MockActivityProvider>());
+  service.setPrivacyRules(kPrivacy);
+  QSignalSpy recorded(&service, &ActivityService::activityRecorded);
+
+  QCOMPARE(service.editSession(session(QStringLiteral("CLion"), 0, 5),
+                               SessionEdit{QStringLiteral("KeePassXC"),
+                                           QStringLiteral("bank.kdbx"),
+                                           std::nullopt}),
+           EditResult::Excluded);
+  QVERIFY(repository.edits.isEmpty());
+  QVERIFY(recorded.isEmpty());
+}
+
+void TestActivityService::editIntoHiddenTitleIsStoredHidden() {
+  FakeActivityRepository repository;
+  ActivityService service(repository,
+                          std::make_unique<MockActivityProvider>());
+  service.setPrivacyRules(kPrivacy);
+
+  QCOMPARE(service.editSession(session(QStringLiteral("Chrome"), 0, 5),
+                               SessionEdit{QStringLiteral("Telegram"),
+                                           QStringLiteral("Olena"),
+                                           std::nullopt}),
+           EditResult::Done);
+  QCOMPARE(repository.edits.size(), 1);
+  QCOMPARE(repository.edits.first().edit.appName, QStringLiteral("Telegram"));
+  QVERIFY2(repository.edits.first().edit.title.isEmpty() &&
+               !repository.edits.first().edit.title.isNull(),
+           "hidden as the tracker would have hidden it, and never NULL");
+}
+
+void TestActivityService::failedEditIsReported() {
+  FakeActivityRepository repository;
+  ActivityService service(repository,
+                          std::make_unique<MockActivityProvider>());
+  QSignalSpy recorded(&service, &ActivityService::activityRecorded);
+  const Activity shown = session(QStringLiteral("CLion"), 0, 5);
+  const SessionEdit edit{QStringLiteral("CLion"), {}, std::nullopt};
+
+  repository.editResult = -1;
+  QCOMPARE(service.editSession(shown, edit), EditResult::Failed);
+  QCOMPARE(service.cutSession(shown, utc(10, 1), utc(10, 2)),
+           EditResult::Failed);
+
+  // Gone in the meantime, e.g. cleared: nothing matched, nothing changed.
+  repository.editResult = 0;
+  QCOMPARE(service.editSession(shown, edit), EditResult::Failed);
+  QVERIFY(recorded.isEmpty());
+}
+
+void TestActivityService::cutIsClippedToTheSession() {
+  FakeActivityRepository repository;
+  ActivityService service(repository,
+                          std::make_unique<MockActivityProvider>());
+  QSignalSpy recorded(&service, &ActivityService::activityRecorded);
+
+  const Activity shown = session(QStringLiteral("Chrome"), 10, 40);
+  QCOMPARE(service.cutSession(shown, utc(10, 30), utc(11, 0)),
+           EditResult::Done);
+
+  QCOMPARE(repository.cuts.size(), 1);
+  QCOMPARE(repository.cuts.first().window.appName, QStringLiteral("Chrome"));
+  QCOMPARE(repository.cuts.first().from, utc(10, 30));
+  QVERIFY2(repository.cuts.first().to == utc(10, 40),
+           "never past the session, into whatever came after it");
+  QCOMPARE(recorded.count(), 1);
+}
+
+void TestActivityService::cutOutsideTheSessionIsRefused() {
+  FakeActivityRepository repository;
+  ActivityService service(repository,
+                          std::make_unique<MockActivityProvider>());
+
+  const Activity shown = session(QStringLiteral("Chrome"), 10, 40);
+  QCOMPARE(service.cutSession(shown, utc(10, 40), utc(10, 50)),
+           EditResult::Invalid);
+  QCOMPARE(service.cutSession(shown, utc(10, 30), utc(10, 20)),
+           EditResult::Invalid);
+  QCOMPARE(service.cutSession(shown, QDateTime(), utc(10, 20)),
+           EditResult::Invalid);
+  QVERIFY(repository.cuts.isEmpty());
 }
 
 QTEST_GUILESS_MAIN(TestActivityService)

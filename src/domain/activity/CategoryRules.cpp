@@ -96,9 +96,11 @@ QList<CategoryTotal> categoryTotals(const QList<TitleTotal> &titles,
   // for every row of a month would be the expensive part of the query.
   QHash<QString, Sum> sums;
   for (const TitleTotal &title : titles) {
-    Sum &sum = sums[rules.categorize(title.appName, title.title)];
-    sum.milliseconds += title.milliseconds;
-    sum.sessionCount += title.sessionCount;
+    auto &[milliseconds, sessionCount] =
+        sums[title.category ? *title.category
+                            : rules.categorize(title.appName, title.title)];
+    milliseconds += title.milliseconds;
+    sessionCount += title.sessionCount;
   }
 
   QList<CategoryTotal> result;

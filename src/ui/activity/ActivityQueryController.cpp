@@ -129,6 +129,9 @@ bool ActivityQueryController::hasCategoryRules() const {
   return !_queryService.categoryRules().isEmpty();
 }
 int ActivityQueryController::categoryCount() const { return _categoryCount; }
+QStringList ActivityQueryController::categoryNames() const {
+  return _queryService.categoryRules().categoryNames();
+}
 
 int ActivityQueryController::dayCount() const {
   if (!_from.isValid() || !_to.isValid() || _from >= _to) {
@@ -331,7 +334,13 @@ void ActivityQueryController::refresh() {
                        granularity);
 
   _sessions->setColorOrder(_colorOrder);
-  _sessions->setActivities(_queryService.sessions(_from, _to, kSessionLimit));
+  QList<Activity> sessions = _queryService.sessions(_from, _to, kSessionLimit);
+  QStringList sessionCategories;
+  sessionCategories.reserve(sessions.size());
+  for (const Activity &session : std::as_const(sessions)) {
+    sessionCategories.append(_queryService.categoryOf(session));
+  }
+  _sessions->setActivities(std::move(sessions), std::move(sessionCategories));
 
   // Shown through the same model as applications: a category row is a name,
   // a time and a share. Colours follow rule order, so a category keeps its

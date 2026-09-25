@@ -21,6 +21,8 @@ private slots:
   void noRulesSkipsTheQuery();
   void categoriesFollowTheRules();
   void ruleChangeAppliesRetroactively();
+  void sessionsAreJoined();
+  void categoryOfPrefersTheOneSetByHand();
 };
 
 void TestActivityQueryService::noRulesSkipsTheQuery() {
@@ -78,6 +80,43 @@ void TestActivityQueryService::ruleChangeAppliesRetroactively() {
       {CategoryRule{QStringLiteral("Work"), {}, QStringLiteral("jira")}}));
   QCOMPARE(service.categoryTotals(kFrom, kTo).first().category,
            QStringLiteral("Work"));
+}
+
+void TestActivityQueryService::sessionsAreJoined() {
+  FakeActivityRepository repository;
+  const QString app = QStringLiteral("CLion");
+  // Newest first, as stored: one stretch cut by two flushes, then a gap.
+  repository.inserted = {
+      Activity{app, QStringLiteral("a"), utc(10, 2), utc(10, 2, 40)},
+      Activity{app, QStringLiteral("a"), utc(10, 1), utc(10, 2)},
+      Activity{app, QStringLiteral("a"), utc(10, 0, 20), utc(10, 1)},
+      Activity{app, QStringLiteral("a"), utc(9, 0), utc(9, 1)},
+  };
+  ActivityQueryService service(repository);
+
+  const QList<Activity> sessions = service.sessions(kFrom, kTo);
+  QCOMPARE(sessions.size(), 2);
+  QCOMPARE(sessions.first().startedOn, utc(10, 0, 20));
+  QCOMPARE(sessions.first().endedOn, utc(10, 2, 40));
+}
+
+void TestActivityQueryService::categoryOfPrefersTheOneSetByHand() {
+  FakeActivityRepository repository;
+  ActivityQueryService service(repository);
+  service.setCategoryRules(CategoryRules({
+      CategoryRule{QStringLiteral("Distractions"),
+                   {QStringLiteral("Chrome")},
+                   QStringLiteral("YouTube")},
+  }));
+
+  Activity video{QStringLiteral("Google Chrome"), QStringLiteral("YouTube"),
+                 utc(10, 0), utc(10, 5)};
+  QCOMPARE(service.categoryOf(video), QStringLiteral("Distractions"));
+  video.category = QStringLiteral("Learning");
+  QCOMPARE(service.categoryOf(video), QStringLiteral("Learning"));
+  video.category = QStringLiteral("");
+  QVERIFY2(service.categoryOf(video).isEmpty(),
+           "taken out of every category by hand");
 }
 
 QTEST_MAIN(TestActivityQueryService)

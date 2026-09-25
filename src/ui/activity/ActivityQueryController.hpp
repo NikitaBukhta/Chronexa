@@ -49,6 +49,7 @@ class ActivityQueryController : public QObject {
   Q_PROPERTY(bool empty READ isEmpty NOTIFY dataChanged)
   Q_PROPERTY(bool hasCategoryRules READ hasCategoryRules NOTIFY dataChanged)
   Q_PROPERTY(int categoryCount READ categoryCount NOTIFY dataChanged)
+  Q_PROPERTY(QStringList categoryNames READ categoryNames NOTIFY dataChanged)
 
   Q_PROPERTY(chronexa::activity::TimeBucketModel *buckets READ buckets CONSTANT)
   Q_PROPERTY(
@@ -62,38 +63,39 @@ public:
   explicit ActivityQueryController(ActivityQueryService &queryService,
                                    QObject *parent = nullptr);
 
-  QDateTime rangeFrom() const;
-  QDateTime rangeTo() const;
-  QString rangeLabel() const;
-  QString preset() const;
-  QDate selectedDay() const;
-  bool singleDay() const;
-  bool canShiftForward() const;
+  [[nodiscard]] QDateTime rangeFrom() const;
+  [[nodiscard]] QDateTime rangeTo() const;
+  [[nodiscard]] QString rangeLabel() const;
+  [[nodiscard]] QString preset() const;
+  [[nodiscard]] QDate selectedDay() const;
+  [[nodiscard]] bool singleDay() const;
+  [[nodiscard]] bool canShiftForward() const;
 
-  QString granularity() const;
+  [[nodiscard]] QString granularity() const;
   void setGranularity(const QString &key);
-  bool granularityAuto() const;
+  [[nodiscard]] bool granularityAuto() const;
 
-  qint64 totalSeconds() const;
-  int sessionCount() const;
-  int appCount() const;
-  qint64 longestSessionSeconds() const;
-  QString longestSessionApp() const;
-  QDateTime firstActivity() const;
-  QDateTime lastActivity() const;
-  QString topAppName() const;
-  qint64 topAppSeconds() const;
-  int dayCount() const;
-  int activeDayCount() const;
-  qint64 dailyAverageSeconds() const;
-  bool isEmpty() const;
-  bool hasCategoryRules() const;
-  int categoryCount() const;
+  [[nodiscard]] qint64 totalSeconds() const;
+  [[nodiscard]] int sessionCount() const;
+  [[nodiscard]] int appCount() const;
+  [[nodiscard]] qint64 longestSessionSeconds() const;
+  [[nodiscard]] QString longestSessionApp() const;
+  [[nodiscard]] QDateTime firstActivity() const;
+  [[nodiscard]] QDateTime lastActivity() const;
+  [[nodiscard]] QString topAppName() const;
+  [[nodiscard]] qint64 topAppSeconds() const;
+  [[nodiscard]] int dayCount() const;
+  [[nodiscard]] int activeDayCount() const;
+  [[nodiscard]] qint64 dailyAverageSeconds() const;
+  [[nodiscard]] bool isEmpty() const;
+  [[nodiscard]] bool hasCategoryRules() const;
+  [[nodiscard]] int categoryCount() const;
+  [[nodiscard]] QStringList categoryNames() const;
 
-  TimeBucketModel *buckets() const;
-  AppTotalsModel *appTotals() const;
-  AppTotalsModel *categoryTotals() const;
-  UserActivityModel *sessions() const;
+  [[nodiscard]] TimeBucketModel *buckets() const;
+  [[nodiscard]] AppTotalsModel *appTotals() const;
+  [[nodiscard]] AppTotalsModel *categoryTotals() const;
+  [[nodiscard]] UserActivityModel *sessions() const;
 
   Q_INVOKABLE void applyPreset(const QString &preset);
 
@@ -123,9 +125,10 @@ signals:
 private:
   void setRangeInternal(const QDateTime &from, const QDateTime &to,
                         const QString &preset);
-  Granularity effectiveGranularity() const;
+  [[nodiscard]] Granularity effectiveGranularity() const;
   void checkDayRollover();
 
+private:
   ActivityQueryService &_queryService;
 
   TimeBucketModel *_buckets = nullptr;
@@ -137,9 +140,6 @@ private:
   QDateTime _from;
   QDateTime _to;
   QString _preset;
-
-  // The day the current preset was resolved against, so a rollover can be
-  // detected while the app stays open.
   QDate _presetDay;
 
   QString _granularityOverride;
