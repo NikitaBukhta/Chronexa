@@ -11,8 +11,17 @@ struct Activity {
   QDateTime startedOn;
   QDateTime endedOn;
 
-  bool isValid() const;
-  qint64 durationSeconds() const;
+  [[nodiscard]] bool isValid() const;
+  [[nodiscard]] qint64 durationSeconds() const;
+};
+
+struct WindowRef {
+  QString appName;
+  QString title;
+
+  bool operator==(const WindowRef &other) const {
+    return appName == other.appName && title == other.title;
+  }
 };
 
 } // namespace chronexa::activity

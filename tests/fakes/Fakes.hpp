@@ -49,8 +49,11 @@ public:
   QList<Activity> inserted;
   QList<TitleTotal> titles;
   bool failInserts = false;
+  bool failRedact = false;
   int insertCalls = 0;
   int clearCalls = 0;
+  QList<WindowRef> removed;
+  QList<WindowRef> hidden;
 
   mutable int titleTotalsCalls = 0;
   mutable QDateTime lastFrom;
@@ -69,6 +72,47 @@ public:
     ++clearCalls;
     inserted.clear();
     return true;
+  }
+
+  bool failWindows = false;
+
+  std::optional<QList<WindowRef>> windows() const override {
+    if (failWindows) {
+      return std::nullopt;
+    }
+    QList<WindowRef> result;
+    for (const Activity &activity : inserted) {
+      const WindowRef window{activity.appName, activity.title};
+      if (!result.contains(window)) {
+        result.append(window);
+      }
+    }
+    return result;
+  }
+  // Applies the redaction to `inserted`, so a test can look at the outcome.
+  int redact(const QList<WindowRef> &remove,
+             const QList<WindowRef> &hideTitle) override {
+    if (failRedact) {
+      return -1;
+    }
+    removed += remove;
+    hidden += hideTitle;
+    int changed = 0;
+    QList<Activity> kept;
+    for (Activity activity : inserted) {
+      const WindowRef window{activity.appName, activity.title};
+      if (remove.contains(window)) {
+        ++changed;
+        continue;
+      }
+      if (hideTitle.contains(window) && !activity.title.isEmpty()) {
+        activity.title.clear();
+        ++changed;
+      }
+      kept.append(activity);
+    }
+    inserted = kept;
+    return changed;
   }
 
   QList<Activity> sessions(const QDateTime &, const QDateTime &,
@@ -102,6 +146,7 @@ class MockActivityProvider : public IUserActivityProvider {
 public:
   QList<Activity> pendingEvents;
   SessionKey sessionKey;
+  PrivacyFilter privacyFilter;
   bool running = false;
   int startCalls = 0;
   int stopCalls = 0;
@@ -116,6 +161,9 @@ public:
   }
   bool isRunning() const override { return running; }
   void setSessionKey(SessionKey key) override { sessionKey = std::move(key); }
+  void setPrivacyFilter(PrivacyFilter filter) override {
+    privacyFilter = std::move(filter);
+  }
   QList<Activity> drainEvents() override {
     QList<Activity> drained;
     drained.swap(pendingEvents);

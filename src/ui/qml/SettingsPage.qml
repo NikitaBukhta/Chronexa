@@ -5,7 +5,24 @@ import QtQuick.Layouts
 Item {
     id: root
 
+    // The outcome of the last "apply to history", shown under its button.
+    property string privacyStatus: ""
+
     signal clearRequested
+    signal privacyApplyRequested
+
+    // A rule edit makes the last outcome stale: history may no longer follow.
+    Connections {
+        target: privacyRules
+
+        function onDataChanged() {
+            root.privacyStatus = "";
+        }
+
+        function onCountChanged() {
+            root.privacyStatus = "";
+        }
+    }
 
     readonly property var themeOptions: [
         { key: "dark", label: qsTr("Dark") },
@@ -136,6 +153,36 @@ Item {
                 CategoryRuleList {
                     Layout.fillWidth: true
                     rulesModel: categoryRules
+                }
+            }
+
+            Card {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.gapLoose
+                Layout.rightMargin: Theme.gapLoose
+                title: qsTr("Privacy")
+                subtitle: qsTr("Matching windows are never recorded, or recorded without their title. The strictest matching rule wins, whatever the order.")
+
+                PrivacyRuleList {
+                    Layout.fillWidth: true
+                    rulesModel: privacyRules
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Theme.border
+                }
+
+                SettingRow {
+                    Layout.fillWidth: true
+                    label: qsTr("Already recorded")
+                    explanation: root.privacyStatus !== "" ? root.privacyStatus : qsTr("Rules apply to new activity. Apply them to the existing history too.")
+
+                    ToolButtonBase {
+                        text: qsTr("Apply to history…")
+                        onClicked: root.privacyApplyRequested()
+                    }
                 }
             }
 

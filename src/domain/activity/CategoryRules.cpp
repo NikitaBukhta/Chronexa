@@ -13,23 +13,6 @@ constexpr auto kCategoryKey = "category";
 constexpr auto kAppsKey = "apps";
 constexpr auto kTitleKey = "title";
 
-QStringList normalizedApps(const QStringList &apps) {
-  QStringList result;
-  for (const QString &app : apps) {
-    const QString trimmed = app.trimmed();
-    if (!trimmed.isEmpty()) {
-      result.append(trimmed);
-    }
-  }
-  return result;
-}
-
-QRegularExpression titleExpression(const QString &pattern) {
-  return QRegularExpression(pattern,
-                            QRegularExpression::CaseInsensitiveOption |
-                                QRegularExpression::UseUnicodePropertiesOption);
-}
-
 } // namespace
 
 namespace chronexa::activity {
@@ -53,25 +36,15 @@ CategoryRules::CategoryRules(QList<CategoryRule> rules)
   for (const CategoryRule &rule : std::as_const(_rules)) {
     Compiled compiled;
     compiled.category = rule.category.trimmed();
-    compiled.apps = normalizedApps(rule.apps);
-    compiled.checksTitle = !rule.titlePattern.trimmed().isEmpty();
-    if (compiled.checksTitle) {
-      compiled.title = titleExpression(rule.titlePattern);
-      compiled.titleValid = compiled.title.isValid();
-    }
+    compiled.matcher = WindowMatcher(rule.apps, rule.titlePattern);
 
-    // Without any condition a rule would claim every window.
-    const bool usable = !compiled.category.isEmpty() &&
-                        (!compiled.apps.isEmpty() || compiled.checksTitle) &&
-                        compiled.titleValid;
+    const bool usable =
+        !compiled.category.isEmpty() && compiled.matcher.isUsable();
     if (usable) {
       compiled.categoryIndex = _categoryNames.indexOf(compiled.category);
       if (compiled.categoryIndex < 0) {
         compiled.categoryIndex = _categoryNames.size();
         _categoryNames.append(compiled.category);
-      }
-      if (compiled.checksTitle) {
-        compiled.title.optimize();
       }
     }
     _compiled.append(std::move(compiled));
@@ -81,22 +54,9 @@ CategoryRules::CategoryRules(QList<CategoryRule> rules)
 QString CategoryRules::categorize(const QString &appName,
                                   const QString &title) const {
   for (const Compiled &rule : _compiled) {
-    if (rule.categoryIndex < 0) {
-      continue;
+    if (rule.categoryIndex >= 0 && rule.matcher.matches(appName, title)) {
+      return rule.category;
     }
-    const bool appMatches =
-        rule.apps.isEmpty() ||
-        std::any_of(rule.apps.cbegin(), rule.apps.cend(),
-                    [&appName](const QString &app) {
-                      return appName.contains(app, Qt::CaseInsensitive);
-                    });
-    if (!appMatches) {
-      continue;
-    }
-    if (rule.checksTitle && !rule.title.match(title).hasMatch()) {
-      continue;
-    }
-    return rule.category;
   }
   return {};
 }
@@ -114,7 +74,7 @@ bool CategoryRules::isUsable(int index) const {
 }
 
 bool CategoryRules::hasValidTitle(int index) const {
-  return isIndex(index) && _compiled.at(index).titleValid;
+  return isIndex(index) && _compiled.at(index).matcher.isTitleValid();
 }
 
 int CategoryRules::categoryIndex(int index) const {

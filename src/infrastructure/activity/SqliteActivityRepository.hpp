@@ -15,6 +15,9 @@ public:
   bool open() override;
   bool insertBatch(const QList<Activity> &activities) override;
   bool clearAll() override;
+  std::optional<QList<WindowRef>> windows() const override;
+  int redact(const QList<WindowRef> &remove,
+             const QList<WindowRef> &hideTitle) override;
 
   QList<Activity> sessions(const QDateTime &from, const QDateTime &to,
                            int limit = -1) const override;
@@ -30,6 +33,9 @@ public:
 
 private:
   bool createSchema();
+  // Moves the WAL into the main file and truncates it, so pages holding
+  // deleted text do not linger in chronexa.db-wal.
+  void checkpoint();
 
   QString _databasePath;
   QString _connectionName;

@@ -120,6 +120,11 @@ void UserActivityController::clearActivities() {
   }
 }
 
+int UserActivityController::applyPrivacyToHistory() {
+  qCInfo(lcController) << "applyPrivacyToHistory() invoked";
+  return _service != nullptr ? _service->applyPrivacyToHistory() : -1;
+}
+
 QString UserActivityController::formatDuration(qint64 seconds,
                                                bool compact) const {
   return format::duration(seconds, compact);

@@ -52,10 +52,6 @@ public:
 
   static QList<CategoryRule> defaultRules();
 
-  // "CLion, Visual Studio Code" <-> {"CLion", "Visual Studio Code"}.
-  static QStringList splitApps(const QString &text);
-  static QString joinApps(const QStringList &apps);
-
 signals:
   void countChanged();
 

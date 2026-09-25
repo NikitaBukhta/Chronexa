@@ -1,5 +1,7 @@
 #include "CategoryRulesModel.hpp"
 
+#include "ActivityFormat.hpp"
+
 #include "core/AppSettings.hpp"
 
 #include <QLoggingCategory>
@@ -40,21 +42,6 @@ QList<CategoryRule> CategoryRulesModel::defaultRules() {
   };
 }
 
-QStringList CategoryRulesModel::splitApps(const QString &text) {
-  QStringList apps;
-  for (const QString &part : text.split(QLatin1Char(','))) {
-    const QString trimmed = part.trimmed();
-    if (!trimmed.isEmpty()) {
-      apps.append(trimmed);
-    }
-  }
-  return apps;
-}
-
-QString CategoryRulesModel::joinApps(const QStringList &apps) {
-  return apps.join(QStringLiteral(", "));
-}
-
 int CategoryRulesModel::rowCount(const QModelIndex &parent) const {
   if (parent.isValid()) {
     return 0;
@@ -74,7 +61,7 @@ QVariant CategoryRulesModel::data(const QModelIndex &index, int role) const {
   case Qt::DisplayRole:
     return rule.category;
   case AppsRole:
-    return joinApps(rule.apps);
+    return format::joinApps(rule.apps);
   case TitlePatternRole:
     return rule.titlePattern;
   case TitleValidRole:
@@ -150,7 +137,8 @@ void CategoryRulesModel::setCategory(int row, const QString &category) {
 }
 
 void CategoryRulesModel::setApps(int row, const QString &apps) {
-  editRow(row, [&apps](CategoryRule &rule) { rule.apps = splitApps(apps); });
+  editRow(row,
+          [&apps](CategoryRule &rule) { rule.apps = format::splitApps(apps); });
 }
 
 void CategoryRulesModel::setTitlePattern(int row, const QString &pattern) {

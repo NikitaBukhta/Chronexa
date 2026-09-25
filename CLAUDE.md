@@ -37,7 +37,7 @@ core/  (app-wide services: settings, translations, logging, paths, bootstrap)
 
 | Layer | Contains | Rules |
 |---|---|---|
-| `src/domain/` | `Activity`, `ActivityStats`, `TrackingSchedule` | Value types + pure logic. No Qt widgets, no DB, no `QObject` unless needed for meta-types. |
+| `src/domain/` | `Activity`, `ActivityStats`, `TrackingSchedule`, `CategoryRules`, `PrivacyRules` (both on `WindowMatcher`) | Value types + pure logic. No Qt widgets, no DB, no `QObject` unless needed for meta-types. |
 | `src/application/` | `ActivityService` (writes), `ActivityQueryService` (reads) | Orchestration. Talks to `I*` interfaces only, never to `QSql*` or Win32. |
 | `src/infrastructure/` | `SqliteActivityRepository`, `PollingActivityProvider` + `WindowsForegroundProbe`, `WindowsAutoStartService` | The only place for SQL, Win32 and registry calls. Each has an `I*.hpp` interface next to it. Session rules live in the platform-free `PollingActivityProvider`; Win32 only in the probe. |
 | `src/ui/` | `*Controller` (QML-facing façade), `*Model` (`QAbstractListModel`), `ActivityFormat` | No business rules; formats and exposes. |
@@ -76,6 +76,12 @@ The doubled segment is real: `AppEnvironment::ensureDataDir()` takes Qt's
 `AppDataLocation` (`Roaming/Chronexa/Chronexa`), goes up one level and appends
 `Chronexa` again — which is a no-op because the organisation and application
 names are identical. Settings live in `QSettings` under the same names.
+
+Privacy rules (Settings → Privacy) are applied in `PollingActivityProvider`
+before a sample becomes a session: an excluded window counts as no window, a
+hidden title is stored as `''` (never NULL -- the column is `NOT NULL`). The DB
+runs with `secure_delete` and checkpoints the WAL after a clear or redaction,
+so removed text does not linger in the files.
 
 The `activity` table is `(id, app_name, title, started_on, ended_on)` with
 `started_on`/`ended_on` as **epoch milliseconds**, indexed by

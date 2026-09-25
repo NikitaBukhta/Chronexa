@@ -106,7 +106,10 @@ ApplicationWindow {
                 }
 
                 SettingsPage {
+                    id: settingsPage
+
                     onClearRequested: clearDialog.open()
+                    onPrivacyApplyRequested: privacyDialog.open()
                 }
             }
         }
@@ -146,6 +149,52 @@ ApplicationWindow {
         onDiscarded: {
             activityController.clearActivities();
             clearDialog.close();
+        }
+    }
+
+    Dialog {
+        id: privacyDialog
+
+        anchors.centerIn: parent
+        width: 400
+        modal: true
+        title: qsTr("Apply privacy rules to history?")
+        standardButtons: Dialog.Cancel | Dialog.Apply
+
+        background: Rectangle {
+            color: Theme.surfaceRaised
+            radius: Theme.radius
+            border.width: 1
+            border.color: Theme.border
+        }
+
+        header: Text {
+            padding: Theme.pad
+            text: privacyDialog.title
+            color: Theme.ink
+            font.pixelSize: Theme.fontTitle
+            font.weight: Font.DemiBold
+        }
+
+        contentItem: Text {
+            text: qsTr("Recorded sessions of excluded windows are deleted, and hidden titles are erased. This cannot be undone.")
+            color: Theme.inkMuted
+            font.pixelSize: Theme.fontBody
+            wrapMode: Text.WordWrap
+        }
+
+        onApplied: {
+            privacyDialog.close();
+            const changed = activityController.applyPrivacyToHistory();
+            if (changed < 0) {
+                settingsPage.privacyStatus = "";
+                failureDialog.message = qsTr("The history could not be changed. Nothing was deleted.");
+                failureDialog.open();
+            } else if (changed === 0) {
+                settingsPage.privacyStatus = qsTr("History already follows the rules.");
+            } else {
+                settingsPage.privacyStatus = qsTr("%n session(s) updated.", "", changed);
+            }
         }
     }
 

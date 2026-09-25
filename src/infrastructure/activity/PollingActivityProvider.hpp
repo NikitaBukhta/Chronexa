@@ -34,6 +34,7 @@ public:
   bool isRunning() const override;
 
   void setSessionKey(SessionKey key) override;
+  void setPrivacyFilter(PrivacyFilter filter) override;
 
   QList<Activity> drainEvents() override;
   std::optional<Activity> currentSession() const override;
@@ -46,7 +47,7 @@ public:
 private:
   void closeCurrentLocked(const QDateTime &at);
   void openCurrentLocked(const QString &appName, const QString &title,
-                         const QString &key, const QDateTime &at);
+                         const QString &key, bool hidden, const QDateTime &at);
 
   std::unique_ptr<IForegroundProbe> _probe;
   Clock _clock;
@@ -56,9 +57,12 @@ private:
   QList<Activity> _buffer;
 
   SessionKey _sessionKey;
+  PrivacyFilter _privacyFilter;
 
   Activity _current;
   QString _currentKey;
+  // Whether the open session's title is withheld; a change splits it.
+  bool _currentHidden = false;
   QDateTime _currentSince;
   bool _hasCurrent = false;
 

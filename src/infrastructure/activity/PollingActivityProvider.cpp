@@ -1,5 +1,7 @@
 #include "PollingActivityProvider.hpp"
 
+#include "domain/activity/PrivacyRules.hpp"
+
 #include <QLoggingCategory>
 #include <QMutexLocker>
 #include <QTimer>
@@ -68,6 +70,11 @@ void PollingActivityProvider::setSessionKey(SessionKey key) {
   _sessionKey = std::move(key);
 }
 
+void PollingActivityProvider::setPrivacyFilter(PrivacyFilter filter) {
+  QMutexLocker locker(&_mutex);
+  _privacyFilter = std::move(filter);
+}
+
 void PollingActivityProvider::poll() {
   const QDateTime now = _clock();
   // Sampled outside the lock: reading another process can block.
@@ -90,6 +97,16 @@ void PollingActivityProvider::poll() {
     return;
   }
 
+  const Privacy privacy = _privacyFilter
+                              ? _privacyFilter(sample.appName, sample.title)
+                              : Privacy::Record;
+  if (privacy == Privacy::Exclude) {
+    closeCurrentLocked(now);
+    return;
+  }
+  const bool hidden = privacy == Privacy::HideTitle;
+  const QString title = hidden ? QString() : sample.title;
+
   // Keyed on the application and the session key, not on (app, title): a
   // media player, a terminal printing progress or a browser tab with a
   // countdown rewrites its title on every poll, and splitting the session there
@@ -97,17 +114,20 @@ void PollingActivityProvider::poll() {
   // below the minimum -- so those apps recorded no time at all. The key is the
   // title's category, so switching from a work tab to YouTube does split,
   // while a ticking title stays one session. Otherwise the title is
-  // descriptive, and follows the window it belongs to.
+  // descriptive, and follows the window it belongs to -- except that a hidden
+  // title splits too, or the private window's time would be booked under the
+  // visible title next to it.
   const QString key =
-      _sessionKey ? _sessionKey(sample.appName, sample.title) : QString();
-  if (_hasCurrent && _current.appName == sample.appName && _currentKey == key) {
-    _current.title = sample.title;
+      _sessionKey ? _sessionKey(sample.appName, title) : QString();
+  if (_hasCurrent && _current.appName == sample.appName && _currentKey == key &&
+      _currentHidden == hidden) {
+    _current.title = title;
     _current.endedOn = now;
     return;
   }
 
   closeCurrentLocked(now);
-  openCurrentLocked(sample.appName, sample.title, key, now);
+  openCurrentLocked(sample.appName, title, key, hidden, now);
 }
 
 void PollingActivityProvider::closeCurrentLocked(const QDateTime &at) {
@@ -122,15 +142,17 @@ void PollingActivityProvider::closeCurrentLocked(const QDateTime &at) {
 
   _current = Activity();
   _currentKey.clear();
+  _currentHidden = false;
   _currentSince = QDateTime();
   _hasCurrent = false;
 }
 
 void PollingActivityProvider::openCurrentLocked(const QString &appName,
                                                 const QString &title,
-                                                const QString &key,
+                                                const QString &key, bool hidden,
                                                 const QDateTime &at) {
   _currentKey = key;
+  _currentHidden = hidden;
   _current.appName = appName;
   _current.title = title;
   _current.startedOn = at;

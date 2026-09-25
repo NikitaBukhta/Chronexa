@@ -122,6 +122,84 @@ void ActivityService::setCategoryRules(const QList<CategoryRule> &rules) {
       });
 }
 
+void ActivityService::setPrivacyRules(const QList<PrivacyRule> &rules) {
+  _privacy = PrivacyRules(rules);
+  qCInfo(lcActivity) << "Privacy rules updated:" << rules.size();
+  redactPending();
+  if (!_activityProvider) {
+    return;
+  }
+  // As for the session key: a copy compiled for the polling path alone.
+  _activityProvider->setPrivacyFilter(
+      [compiled = PrivacyRules(rules)](const QString &appName,
+                                       const QString &title) {
+        return compiled.classify(appName, title);
+      });
+}
+
+int ActivityService::applyPrivacyToHistory() {
+  // Written first, so what was sampled up to now is covered too. Announced
+  // like any flush: the rows it writes are new to the views either way.
+  flush(Notify::Yes);
+
+  const std::optional<QList<WindowRef>> windows = _repository.windows();
+  if (!windows) {
+    qCWarning(lcActivity) << "History unreadable -- privacy rules not applied";
+    return -1;
+  }
+
+  QList<WindowRef> remove;
+  QList<WindowRef> hideTitle;
+  for (const WindowRef &window : *windows) {
+    switch (_privacy.classify(window.appName, window.title)) {
+    case Privacy::Exclude:
+      remove.append(window);
+      break;
+    case Privacy::HideTitle:
+      hideTitle.append(window);
+      break;
+    case Privacy::Record:
+      break;
+    }
+  }
+
+  const int changed = _repository.redact(remove, hideTitle);
+  if (changed < 0) {
+    qCWarning(lcActivity) << "Privacy rules could not be applied to history";
+    return changed;
+  }
+
+  qCInfo(lcActivity) << "Privacy rules applied to history:" << remove.size()
+                     << "windows removed," << hideTitle.size()
+                     << "titles hidden," << changed << "sessions changed";
+  if (changed > 0) {
+    emit activityRecorded();
+  }
+  return changed;
+}
+
+void ActivityService::redactPending() {
+  if (_privacy.isEmpty() || _pending.isEmpty()) {
+    return;
+  }
+
+  QList<Activity> kept;
+  kept.reserve(_pending.size());
+  for (Activity &activity : _pending) {
+    switch (_privacy.classify(activity.appName, activity.title)) {
+    case Privacy::Exclude:
+      continue;
+    case Privacy::HideTitle:
+      activity.title.clear();
+      break;
+    case Privacy::Record:
+      break;
+    }
+    kept.append(std::move(activity));
+  }
+  _pending.swap(kept);
+}
+
 bool ActivityService::isTracking() const {
   return _activityProvider && _activityProvider->isRunning();
 }
@@ -210,6 +288,7 @@ void ActivityService::flush(Notify notify) {
   // database cannot be opened, and dropping the batch on failure discarded a
   // full minute of tracked time every minute with only a log line to show.
   _pending += _activityProvider->drainEvents();
+  redactPending();
   if (_pending.isEmpty()) {
     return;
   }

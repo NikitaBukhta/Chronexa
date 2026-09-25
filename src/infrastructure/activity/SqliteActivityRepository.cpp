@@ -20,6 +20,13 @@ constexpr auto kOverlaps = "ended_on > :from AND started_on < :to";
 
 qint64 toMs(const QDateTime &moment) { return moment.toMSecsSinceEpoch(); }
 
+// A null QString binds as SQL NULL, which the NOT NULL title column rejects
+// on insert and `title = :title` never matches. A hidden title is exactly
+// that null string, so every bound title goes through here.
+QString bindableText(const QString &text) {
+  return text.isNull() ? QStringLiteral("") : text;
+}
+
 QDateTime fromMs(qint64 ms) {
   return QDateTime::fromMSecsSinceEpoch(ms, QTimeZone::LocalTime);
 }
@@ -61,6 +68,9 @@ bool SqliteActivityRepository::open() {
   QSqlQuery pragma(_db);
   pragma.exec(QStringLiteral("PRAGMA journal_mode = WAL"));
   pragma.exec(QStringLiteral("PRAGMA synchronous = NORMAL"));
+  // Deleted and overwritten rows are zeroed rather than left in free pages:
+  // clearing history or hiding a title has to remove the text from the file.
+  pragma.exec(QStringLiteral("PRAGMA secure_delete = ON"));
 
   if (!createSchema()) {
     return false;
@@ -108,7 +118,7 @@ bool SqliteActivityRepository::insertBatch(const QList<Activity> &activities) {
       continue;
     }
     query.addBindValue(activity.appName);
-    query.addBindValue(activity.title);
+    query.addBindValue(bindableText(activity.title));
     query.addBindValue(toMs(activity.startedOn));
     query.addBindValue(toMs(activity.endedOn));
     if (query.exec()) {
@@ -137,8 +147,102 @@ bool SqliteActivityRepository::clearAll() {
   const bool ok = query.exec(QStringLiteral("DELETE FROM activity"));
   if (!ok) {
     qCWarning(lcRepo) << "Clear failed:" << query.lastError().text();
+    return false;
   }
-  return ok;
+  checkpoint();
+  return true;
+}
+
+std::optional<QList<WindowRef>> SqliteActivityRepository::windows() const {
+  if (!_db.isOpen()) {
+    return std::nullopt;
+  }
+
+  QSqlQuery query(_db);
+  if (!query.exec(
+          QStringLiteral("SELECT DISTINCT app_name, title FROM activity"))) {
+    qCWarning(lcRepo) << "windows() failed:" << query.lastError().text();
+    return std::nullopt;
+  }
+
+  QList<WindowRef> result;
+  while (query.next()) {
+    result.append({query.value(0).toString(), query.value(1).toString()});
+  }
+  return result;
+}
+
+int SqliteActivityRepository::redact(const QList<WindowRef> &remove,
+                                     const QList<WindowRef> &hideTitle) {
+  if (!_db.isOpen()) {
+    return -1;
+  }
+  if (remove.isEmpty() && hideTitle.isEmpty()) {
+    return 0;
+  }
+
+  if (!_db.transaction()) {
+    qCWarning(lcRepo) << "Redact could not begin:" << _db.lastError().text();
+    return -1;
+  }
+
+  QSqlQuery removeQuery(_db);
+  removeQuery.prepare(QStringLiteral(
+      "DELETE FROM activity WHERE app_name = :app AND title = :title"));
+  QSqlQuery hideQuery(_db);
+  hideQuery.prepare(QStringLiteral("UPDATE activity SET title = '' "
+                                   "WHERE app_name = :app AND title = :title"));
+
+  // All or nothing: a half-applied redaction would leave the user believing
+  // the text was gone.
+  int changed = 0;
+  const auto run = [&changed](QSqlQuery &query, const WindowRef &window) {
+    query.bindValue(QStringLiteral(":app"), window.appName);
+    query.bindValue(QStringLiteral(":title"), bindableText(window.title));
+    if (!query.exec()) {
+      qCWarning(lcRepo) << "Redact failed:" << query.lastError().text();
+      return false;
+    }
+    changed += query.numRowsAffected();
+    return true;
+  };
+
+  bool ok = true;
+  for (const WindowRef &window : remove) {
+    ok = ok && run(removeQuery, window);
+  }
+  for (const WindowRef &window : hideTitle) {
+    if (!window.title.isEmpty()) {
+      ok = ok && run(hideQuery, window);
+    }
+  }
+
+  if (!ok || !_db.commit()) {
+    if (ok) {
+      qCWarning(lcRepo) << "Redact commit failed:" << _db.lastError().text();
+    }
+    _db.rollback();
+    return -1;
+  }
+
+  checkpoint();
+  qCInfo(lcRepo) << "Redacted" << changed << "sessions";
+  return changed;
+}
+
+void SqliteActivityRepository::checkpoint() {
+  QSqlQuery query(_db);
+  if (!query.exec(QStringLiteral("PRAGMA wal_checkpoint(TRUNCATE)"))) {
+    qCWarning(lcRepo) << "Checkpoint failed:" << query.lastError().text();
+    return;
+  }
+  // A busy database is reported in the row, not as an error: another reader
+  // keeps the old pages in the WAL until it lets go. SQLite folds the WAL in
+  // when the last connection closes, so the text goes at the latest then.
+  if (query.next() && query.value(0).toInt() != 0) {
+    qCWarning(lcRepo) << "Checkpoint incomplete, the database is in use -- "
+                         "removed text stays in the WAL until it is released";
+  }
 }
 
 QList<Activity> SqliteActivityRepository::sessions(const QDateTime &from,

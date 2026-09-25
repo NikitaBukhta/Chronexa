@@ -5,6 +5,7 @@
 #include <QDate>
 #include <QDateTime>
 #include <QString>
+#include <QStringList>
 
 namespace chronexa::activity::format {
 
@@ -21,5 +22,8 @@ QString bucketLabel(const BucketTotal &bucket, Granularity granularity);
 QString bucketDescription(const BucketTotal &bucket, Granularity granularity);
 
 QString rangeLabel(const QDateTime &from, const QDateTime &to);
+
+QStringList splitApps(const QString &text);
+QString joinApps(const QStringList &apps);
 
 } // namespace chronexa::activity::format

@@ -240,6 +240,30 @@
         <source>That did not work</source>
         <translation>Не вдалося</translation>
     </message>
+    <message>
+        <source>Apply privacy rules to history?</source>
+        <translation>Застосувати правила приватності до історії?</translation>
+    </message>
+    <message>
+        <source>Recorded sessions of excluded windows are deleted, and hidden titles are erased. This cannot be undone.</source>
+        <translation>Записані сеанси виключених вікон буде видалено, а приховані заголовки — стерто. Це не можна скасувати.</translation>
+    </message>
+    <message>
+        <source>The history could not be changed. Nothing was deleted.</source>
+        <translation>Не вдалося змінити історію. Нічого не видалено.</translation>
+    </message>
+    <message>
+        <source>History already follows the rules.</source>
+        <translation>Історія вже відповідає правилам.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n session(s) updated.</source>
+        <translation>
+            <numerusform>Оновлено %n сеанс.</numerusform>
+            <numerusform>Оновлено %n сеанси.</numerusform>
+            <numerusform>Оновлено %n сеансів.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>NavRail</name>
@@ -472,6 +496,49 @@
     </message>
 </context>
 <context>
+    <name>PrivacyRuleList</name>
+    <message>
+        <source>Don't record</source>
+        <translation>Не записувати</translation>
+    </message>
+    <message>
+        <source>Hide title</source>
+        <translation>Приховати заголовок</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation>Дія</translation>
+    </message>
+    <message>
+        <source>Applications, comma-separated</source>
+        <translation>Застосунки через кому</translation>
+    </message>
+    <message>
+        <source>Window title (regex)</source>
+        <translation>Заголовок вікна (regex)</translation>
+    </message>
+    <message>
+        <source>Any application</source>
+        <translation>Будь-який застосунок</translation>
+    </message>
+    <message>
+        <source>Any title</source>
+        <translation>Будь-який заголовок</translation>
+    </message>
+    <message>
+        <source>No rules — every window is recorded with its title.</source>
+        <translation>Правил немає — кожне вікно записується разом із заголовком.</translation>
+    </message>
+    <message>
+        <source>Add rule</source>
+        <translation>Додати правило</translation>
+    </message>
+    <message>
+        <source>Restore defaults</source>
+        <translation>Повернути типові</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <source>0m</source>
@@ -662,6 +729,26 @@
     <message>
         <source>The first matching rule decides, so put narrow rules (YouTube in a browser) above broad ones.</source>
         <translation>Вирішує перше відповідне правило, тож вузькі правила (YouTube у браузері) ставте вище загальних.</translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation>Приватність</translation>
+    </message>
+    <message>
+        <source>Matching windows are never recorded, or recorded without their title. The strictest matching rule wins, whatever the order.</source>
+        <translation>Вікна, що підпадають під правило, не записуються взагалі або записуються без заголовка. Діє найсуворіше правило, незалежно від порядку.</translation>
+    </message>
+    <message>
+        <source>Already recorded</source>
+        <translation>Уже записане</translation>
+    </message>
+    <message>
+        <source>Rules apply to new activity. Apply them to the existing history too.</source>
+        <translation>Правила діють для нової активності. Застосуйте їх і до наявної історії.</translation>
+    </message>
+    <message>
+        <source>Apply to history…</source>
+        <translation>Застосувати до історії…</translation>
     </message>
 </context>
 <context>

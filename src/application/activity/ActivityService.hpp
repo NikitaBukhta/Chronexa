@@ -1,6 +1,7 @@
 #pragma once
 
 #include "domain/activity/CategoryRules.hpp"
+#include "domain/activity/PrivacyRules.hpp"
 #include "domain/activity/TrackingSchedule.hpp"
 #include "infrastructure/activity/IActivityRepository.hpp"
 #include "infrastructure/activity/IUserActivityProvider.hpp"
@@ -28,23 +29,21 @@ public:
   void requestClear();
 
   void setTrackingEnabled(bool enabled);
-  bool isTrackingEnabled() const;
+  [[nodiscard]] bool isTrackingEnabled() const;
 
   void setSchedule(const TrackingSchedule &schedule);
-  TrackingSchedule schedule() const;
+  [[nodiscard]] TrackingSchedule schedule() const;
 
-  // Sessions are split where the category changes, so a browser session that
-  // moves from a work tab to YouTube is recorded as two.
   void setCategoryRules(const QList<CategoryRule> &rules);
+  void setPrivacyRules(const QList<PrivacyRule> &rules);
 
-  bool isTracking() const;
+  int applyPrivacyToHistory();
 
-  bool isHeldBySchedule() const;
-
-  QDateTime nextScheduleChange() const;
-
-  std::optional<Activity> currentSession() const;
-  bool isIdle() const;
+  [[nodiscard]] bool isTracking() const;
+  [[nodiscard]] bool isHeldBySchedule() const;
+  [[nodiscard]] QDateTime nextScheduleChange() const;
+  [[nodiscard]] std::optional<Activity> currentSession() const;
+  [[nodiscard]] bool isIdle() const;
 
 signals:
   void activityRecorded();
@@ -65,6 +64,7 @@ private:
   void flush(Notify notify);
 
   void applyTrackingState();
+  void redactPending();
 
   IActivityRepository &_repository;
   std::unique_ptr<IUserActivityProvider> _activityProvider;
@@ -74,6 +74,7 @@ private:
 
   bool _trackingEnabled = true;
   TrackingSchedule _schedule;
+  PrivacyRules _privacy;
 };
 
 } // namespace chronexa::activity

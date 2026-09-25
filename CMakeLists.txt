@@ -35,6 +35,10 @@ qt_add_executable(Chronexa
     src/domain/activity/TrackingSchedule.cpp
     src/domain/activity/CategoryRules.hpp
     src/domain/activity/CategoryRules.cpp
+    src/domain/activity/PrivacyRules.hpp
+    src/domain/activity/PrivacyRules.cpp
+    src/domain/activity/WindowMatcher.hpp
+    src/domain/activity/WindowMatcher.cpp
 
     src/application/activity/ActivityService.hpp
     src/application/activity/ActivityService.cpp
@@ -63,6 +67,8 @@ qt_add_executable(Chronexa
     src/ui/activity/AppTotalsModel.cpp
     src/ui/activity/CategoryRulesModel.hpp
     src/ui/activity/CategoryRulesModel.cpp
+    src/ui/activity/PrivacyRulesModel.hpp
+    src/ui/activity/PrivacyRulesModel.cpp
     src/ui/activity/TimeBucketModel.hpp
     src/ui/activity/TimeBucketModel.cpp
     src/ui/activity/UserActivityController.hpp

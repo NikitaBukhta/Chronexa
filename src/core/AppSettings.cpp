@@ -15,6 +15,7 @@ constexpr auto kScheduleEnd = "tracking/scheduleEndMinutes";
 constexpr auto kScheduleDays = "tracking/scheduleDays";
 constexpr auto kLanguage = "general/language";
 constexpr auto kCategoryRules = "categories/rules";
+constexpr auto kPrivacyRules = "privacy/rules";
 
 constexpr int kMinutesPerDay = 24 * 60;
 
@@ -51,6 +52,8 @@ AppSettings::AppSettings(QObject *parent)
 
   _categoryRules =
       activity::parseCategoryRules(_store->value(kCategoryRules).toString());
+  _privacyRules =
+      activity::parsePrivacyRules(_store->value(kPrivacyRules).toString());
 
   qCInfo(lcSettings) << "Settings loaded from" << _store->fileName();
 }
@@ -157,6 +160,24 @@ void AppSettings::setCategoryRules(const QList<activity::CategoryRule> &rules) {
   store(QLatin1String(kCategoryRules), activity::serializeCategoryRules(rules));
   qCInfo(lcSettings) << "Category rules saved:" << rules.size();
   emit categoryRulesChanged();
+}
+
+bool AppSettings::hasPrivacyRules() const {
+  return _store->contains(QLatin1String(kPrivacyRules));
+}
+
+const QList<activity::PrivacyRule> &AppSettings::privacyRules() const {
+  return _privacyRules;
+}
+
+void AppSettings::setPrivacyRules(const QList<activity::PrivacyRule> &rules) {
+  if (_privacyRules == rules && hasPrivacyRules()) {
+    return;
+  }
+  _privacyRules = rules;
+  store(QLatin1String(kPrivacyRules), activity::serializePrivacyRules(rules));
+  qCInfo(lcSettings) << "Privacy rules saved:" << rules.size();
+  emit privacyRulesChanged();
 }
 
 } // namespace chronexa::core

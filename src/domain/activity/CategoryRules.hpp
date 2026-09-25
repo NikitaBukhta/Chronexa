@@ -1,22 +1,17 @@
 #pragma once
 
 #include "ActivityStats.hpp"
+#include "WindowMatcher.hpp"
 
 #include <QList>
-#include <QRegularExpression>
 #include <QString>
 #include <QStringList>
 
 namespace chronexa::activity {
 
 // "CLion, Visual Studio Code -> Work", "YouTube in a Chrome title ->
-// Distractions". A rule matches when every condition it sets holds:
-//  - apps: any entry is a case-insensitive substring of the app name. A
-//    substring rather than an exact name, because the recorded name is the
-//    executable's description ("CLion (GUI launcher)"), which nobody types.
-//  - titlePattern: a case-insensitive regular expression found in the title.
-// An empty condition is not checked; a rule with neither would claim every
-// window and is invalid.
+// Distractions". A rule matches as a WindowMatcher over its apps and title
+// pattern; a rule with neither would claim every window and is invalid.
 struct CategoryRule {
   QString category;
   QStringList apps;
@@ -56,10 +51,7 @@ public:
 private:
   struct Compiled {
     QString category;
-    QStringList apps;
-    QRegularExpression title;
-    bool checksTitle = false;
-    bool titleValid = true;
+    WindowMatcher matcher;
     int categoryIndex = -1;
   };
 

@@ -240,6 +240,30 @@
         <source>That did not work</source>
         <translation>Не получилось</translation>
     </message>
+    <message>
+        <source>Apply privacy rules to history?</source>
+        <translation>Применить правила приватности к истории?</translation>
+    </message>
+    <message>
+        <source>Recorded sessions of excluded windows are deleted, and hidden titles are erased. This cannot be undone.</source>
+        <translation>Записанные сеансы исключённых окон будут удалены, а скрытые заголовки — стёрты. Это нельзя отменить.</translation>
+    </message>
+    <message>
+        <source>The history could not be changed. Nothing was deleted.</source>
+        <translation>Не удалось изменить историю. Ничего не удалено.</translation>
+    </message>
+    <message>
+        <source>History already follows the rules.</source>
+        <translation>История уже соответствует правилам.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n session(s) updated.</source>
+        <translation>
+            <numerusform>Обновлён %n сеанс.</numerusform>
+            <numerusform>Обновлено %n сеанса.</numerusform>
+            <numerusform>Обновлено %n сеансов.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>NavRail</name>
@@ -472,6 +496,49 @@
     </message>
 </context>
 <context>
+    <name>PrivacyRuleList</name>
+    <message>
+        <source>Don't record</source>
+        <translation>Не записывать</translation>
+    </message>
+    <message>
+        <source>Hide title</source>
+        <translation>Скрыть заголовок</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation>Действие</translation>
+    </message>
+    <message>
+        <source>Applications, comma-separated</source>
+        <translation>Приложения через запятую</translation>
+    </message>
+    <message>
+        <source>Window title (regex)</source>
+        <translation>Заголовок окна (regex)</translation>
+    </message>
+    <message>
+        <source>Any application</source>
+        <translation>Любое приложение</translation>
+    </message>
+    <message>
+        <source>Any title</source>
+        <translation>Любой заголовок</translation>
+    </message>
+    <message>
+        <source>No rules — every window is recorded with its title.</source>
+        <translation>Правил нет — каждое окно записывается вместе с заголовком.</translation>
+    </message>
+    <message>
+        <source>Add rule</source>
+        <translation>Добавить правило</translation>
+    </message>
+    <message>
+        <source>Restore defaults</source>
+        <translation>Вернуть по умолчанию</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <source>0m</source>
@@ -662,6 +729,26 @@
     <message>
         <source>The first matching rule decides, so put narrow rules (YouTube in a browser) above broad ones.</source>
         <translation>Решает первое подходящее правило, поэтому узкие правила (YouTube в браузере) ставьте выше общих.</translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation>Приватность</translation>
+    </message>
+    <message>
+        <source>Matching windows are never recorded, or recorded without their title. The strictest matching rule wins, whatever the order.</source>
+        <translation>Окна, подпадающие под правило, не записываются вовсе или записываются без заголовка. Действует самое строгое правило, независимо от порядка.</translation>
+    </message>
+    <message>
+        <source>Already recorded</source>
+        <translation>Уже записанное</translation>
+    </message>
+    <message>
+        <source>Rules apply to new activity. Apply them to the existing history too.</source>
+        <translation>Правила действуют для новой активности. Примените их и к существующей истории.</translation>
+    </message>
+    <message>
+        <source>Apply to history…</source>
+        <translation>Применить к истории…</translation>
     </message>
 </context>
 <context>

@@ -1,4 +1,5 @@
 #include "core/AppSettings.hpp"
+#include "ui/activity/ActivityFormat.hpp"
 #include "ui/activity/CategoryRulesModel.hpp"
 
 #include <QCoreApplication>
@@ -100,11 +101,11 @@ void TestCategoryRulesModel::editsAreSaved() {
 }
 
 void TestCategoryRulesModel::splitAndJoinApps() {
-  QCOMPARE(CategoryRulesModel::splitApps(QStringLiteral(" a ,b,, c ")),
+  QCOMPARE(format::splitApps(QStringLiteral(" a ,b,, c ")),
            (QStringList{QStringLiteral("a"), QStringLiteral("b"),
                         QStringLiteral("c")}));
-  QVERIFY(CategoryRulesModel::splitApps(QStringLiteral(" , ")).isEmpty());
-  QCOMPARE(CategoryRulesModel::joinApps(
+  QVERIFY(format::splitApps(QStringLiteral(" , ")).isEmpty());
+  QCOMPARE(format::joinApps(
                {QStringLiteral("CLion"), QStringLiteral("Visual Studio Code")}),
            QStringLiteral("CLion, Visual Studio Code"));
 }

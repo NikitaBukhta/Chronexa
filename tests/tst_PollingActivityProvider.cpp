@@ -1,4 +1,5 @@
 #include "domain/activity/CategoryRules.hpp"
+#include "domain/activity/PrivacyRules.hpp"
 #include "fakes/ForegroundScript.hpp"
 
 #include <QTest>
@@ -26,6 +27,25 @@ IUserActivityProvider::SessionKey categoryKey() {
   };
 }
 
+// KeePass is never recorded, nor is an incognito Chrome window; Telegram and
+// Chrome keep their time but lose their titles.
+IUserActivityProvider::PrivacyFilter privacyFilter() {
+  return [rules = PrivacyRules({
+              PrivacyRule{Privacy::Exclude, {QStringLiteral("KeePass")}, {}},
+              PrivacyRule{Privacy::Exclude,
+                          {QStringLiteral("Chrome")},
+                          QStringLiteral("Incognito")},
+              PrivacyRule{Privacy::HideTitle,
+                          {QStringLiteral("Telegram"), QStringLiteral("Chrome")},
+                          {}},
+          })](const QString &app, const QString &title) {
+    return rules.classify(app, title);
+  };
+}
+
+const QString kKeePass = QStringLiteral("KeePassXC");
+const QString kTelegram = QStringLiteral("Telegram Desktop");
+
 } // namespace
 
 class TestPollingActivityProvider : public QObject {
@@ -45,6 +65,13 @@ private slots:
   void drainSplitsWithoutDoubleCounting();
   void currentSessionReportsWholeSpan();
   void keyChangeAppliesFromTheNextPoll();
+
+  void excludedWindowRecordsNothing();
+  void excludedWindowIsNotTheCurrentSession();
+  void hiddenTitleIsNeverStored();
+  void hiddenTitleNeverReachesTheSessionKey();
+  void excludedTitleSplitsOneApp();
+  void hiddenTitleSplitsOneApp();
 
 private:
   void hold(const QString &app, const QString &title, int seconds) {
@@ -208,6 +235,118 @@ void TestPollingActivityProvider::keyChangeAppliesFromTheNextPoll() {
   QCOMPARE(sessions.size(), 2);
   QCOMPARE(sessions.at(0).durationSeconds() + sessions.at(1).durationSeconds(),
            6);
+}
+
+void TestPollingActivityProvider::excludedWindowRecordsNothing() {
+  _provider->setPrivacyFilter(privacyFilter());
+
+  hold(kSlack, QStringLiteral("general"), 5);
+  hold(kKeePass, QStringLiteral("Passwords.kdbx - KeePassXC"), 6);
+  hold(kSlack, QStringLiteral("general"), 4);
+  _script->leave();
+
+  const QList<Activity> sessions = _provider->drainEvents();
+  QCOMPARE(sessions.size(), 2);
+  for (const Activity &session : sessions) {
+    QCOMPARE(session.appName, kSlack);
+  }
+  QVERIFY2(sessions.at(0).endedOn == utc(10, 0, 5),
+           "the session before closes when the excluded window comes up");
+  QVERIFY2(sessions.at(1).startedOn == utc(10, 0, 11),
+           "the excluded window's time is not given to anyone");
+  QCOMPARE(sessions.at(1).durationSeconds(), 4);
+}
+
+void TestPollingActivityProvider::excludedWindowIsNotTheCurrentSession() {
+  _provider->setPrivacyFilter(privacyFilter());
+
+  hold(kKeePass, QStringLiteral("Passwords.kdbx"), 3);
+
+  QVERIFY(!_provider->currentSession().has_value());
+  QVERIFY(_provider->drainEvents().isEmpty());
+}
+
+void TestPollingActivityProvider::hiddenTitleIsNeverStored() {
+  _provider->setPrivacyFilter(privacyFilter());
+
+  hold(kTelegram, QStringLiteral("Olena: see you at 7"), 3);
+  const auto current = _provider->currentSession();
+  QVERIFY(current.has_value());
+  QCOMPARE(current->appName, kTelegram);
+  QVERIFY2(current->title.isEmpty(), "not even the live view shows the title");
+
+  hold(kTelegram, QStringLiteral("Petro: the code is 4411"), 3);
+  _script->leave();
+
+  const QList<Activity> sessions = _provider->drainEvents();
+  QCOMPARE(sessions.size(), 1);
+  QCOMPARE(sessions.first().appName, kTelegram);
+  QCOMPARE(sessions.first().title, QString());
+  QVERIFY2(sessions.first().durationSeconds() == 6,
+           "the time still counts, only the title is withheld");
+}
+
+void TestPollingActivityProvider::hiddenTitleNeverReachesTheSessionKey() {
+  _provider->setPrivacyFilter(privacyFilter());
+  QStringList seen;
+  _provider->setSessionKey([&seen, key = categoryKey()](const QString &app,
+                                                        const QString &title) {
+    seen.append(title);
+    return key(app, title);
+  });
+
+  hold(kChrome, QStringLiteral("Pull Request"), 3);
+  hold(kChrome, QStringLiteral("Cats - YouTube"), 3);
+  _script->leave();
+
+  QVERIFY(!seen.isEmpty());
+  for (const QString &title : std::as_const(seen)) {
+    QVERIFY2(title.isEmpty(), qPrintable(title));
+  }
+  QVERIFY2(_provider->drainEvents().size() == 1,
+           "with the title hidden, the category cannot change within Chrome");
+}
+
+void TestPollingActivityProvider::excludedTitleSplitsOneApp() {
+  _provider->setPrivacyFilter(privacyFilter());
+
+  hold(kChrome, QStringLiteral("Docs"), 4);
+  hold(kChrome, QStringLiteral("New Tab - Google Chrome (Incognito)"), 4);
+  hold(kChrome, QStringLiteral("Docs"), 4);
+  _script->leave();
+
+  const QList<Activity> sessions = _provider->drainEvents();
+  QCOMPARE(sessions.size(), 2);
+  QCOMPARE(sessions.at(0).durationSeconds(), 4);
+  QCOMPARE(sessions.at(1).startedOn, utc(10, 0, 8));
+  QCOMPARE(sessions.at(1).durationSeconds(), 4);
+}
+
+// Titles alone never split a session, but hiding one does: otherwise the
+// private window's time would be booked under the visible title next to it,
+// and categorized by it.
+void TestPollingActivityProvider::hiddenTitleSplitsOneApp() {
+  _provider->setPrivacyFilter(
+      [rules = PrivacyRules({PrivacyRule{Privacy::HideTitle,
+                                         {QStringLiteral("Chrome")},
+                                         QStringLiteral("WhatsApp")}})](
+          const QString &app, const QString &title) {
+        return rules.classify(app, title);
+      });
+
+  hold(kChrome, QStringLiteral("Docs"), 4);
+  hold(kChrome, QStringLiteral("(3) WhatsApp - Olena"), 5);
+  hold(kChrome, QStringLiteral("Docs"), 3);
+  _script->leave();
+
+  const QList<Activity> sessions = _provider->drainEvents();
+  QCOMPARE(sessions.size(), 3);
+  QCOMPARE(sessions.at(0).title, QStringLiteral("Docs"));
+  QCOMPARE(sessions.at(0).durationSeconds(), 4);
+  QCOMPARE(sessions.at(1).title, QString());
+  QCOMPARE(sessions.at(1).durationSeconds(), 5);
+  QCOMPARE(sessions.at(2).title, QStringLiteral("Docs"));
+  QCOMPARE(sessions.at(2).durationSeconds(), 3);
 }
 
 QTEST_GUILESS_MAIN(TestPollingActivityProvider)

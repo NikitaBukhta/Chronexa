@@ -8,6 +8,7 @@
 #include "infrastructure/activity/SqliteActivityRepository.hpp"
 #include "ui/activity/ActivityQueryController.hpp"
 #include "ui/activity/CategoryRulesModel.hpp"
+#include "ui/activity/PrivacyRulesModel.hpp"
 #include "ui/activity/UserActivityController.hpp"
 #include "ui/settings/SettingsController.hpp"
 
@@ -61,6 +62,7 @@ void AppInitializer::shutdown() {
   _logQuery.reset();
   _periodQuery.reset();
   _dayQuery.reset();
+  _privacyRules.reset();
   _categoryRules.reset();
   _activityController.reset();
   _activityService.reset();
@@ -133,9 +135,12 @@ void AppInitializer::buildActivityModule() {
       std::make_unique<activity::ActivityQueryService>(*_activityRepository);
   _activityService =
       std::make_unique<activity::ActivityService>(*_activityRepository);
+  _privacyRules =
+      std::make_unique<activity::PrivacyRulesModel>(_settings.get());
+  applyPrivacyRules();
+  QObject::connect(_settings.get(), &AppSettings::privacyRulesChanged,
+                   _activityService.get(), [this]() { applyPrivacyRules(); });
 
-  // Seeds the default rules on first run, so it comes before anything reads
-  // them. Built after the settings module: the default names are translated.
   _categoryRules =
       std::make_unique<activity::CategoryRulesModel>(_settings.get());
   applyCategoryRules();
@@ -196,6 +201,10 @@ void AppInitializer::applyCategoryRules() {
   _activityService->setCategoryRules(rules);
 }
 
+void AppInitializer::applyPrivacyRules() {
+  _activityService->setPrivacyRules(_settings->privacyRules());
+}
+
 void AppInitializer::registerQmlTypes() {
   QQmlContext *context = _engine->rootContext();
   context->setContextProperty("activityController", _activityController.get());
@@ -206,6 +215,7 @@ void AppInitializer::registerQmlTypes() {
   context->setContextProperty("logQuery", _logQuery.get());
   context->setContextProperty("monthQuery", _monthQuery.get());
   context->setContextProperty("categoryRules", _categoryRules.get());
+  context->setContextProperty("privacyRules", _privacyRules.get());
 
   QObject::connect(
       _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app,

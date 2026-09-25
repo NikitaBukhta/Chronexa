@@ -169,4 +169,19 @@ QString rangeLabel(const QDateTime &from, const QDateTime &to) {
       .arg(lastDay.year());
 }
 
+QStringList splitApps(const QString &text) {
+  QStringList apps;
+  for (const QString &part : text.split(QLatin1Char(','))) {
+    const QString trimmed = part.trimmed();
+    if (!trimmed.isEmpty()) {
+      apps.append(trimmed);
+    }
+  }
+  return apps;
+}
+
+QString joinApps(const QStringList &apps) {
+  return apps.join(QStringLiteral(", "));
+}
+
 } // namespace chronexa::activity::format

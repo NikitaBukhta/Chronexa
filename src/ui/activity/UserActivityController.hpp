@@ -57,6 +57,8 @@ public:
 
   Q_INVOKABLE void toggleTracking();
   Q_INVOKABLE void clearActivities();
+  // Sessions changed, or -1 when the history could not be written.
+  Q_INVOKABLE int applyPrivacyToHistory();
 
   Q_INVOKABLE QString formatDuration(qint64 seconds,
                                      bool compact = false) const;
