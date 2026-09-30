@@ -37,9 +37,9 @@ core/  (app-wide services: settings, translations, logging, paths, bootstrap)
 
 | Layer | Contains | Rules |
 |---|---|---|
-| `src/domain/` | `Activity`, `ActivityStats`, `TrackingSchedule`, `CategoryRules`, `PrivacyRules` (both on `WindowMatcher`) | Value types + pure logic. No Qt widgets, no DB, no `QObject` unless needed for meta-types. |
-| `src/application/` | `ActivityService` (writes), `ActivityQueryService` (reads) | Orchestration. Talks to `I*` interfaces only, never to `QSql*` or Win32. |
-| `src/infrastructure/` | `SqliteActivityRepository`, `PollingActivityProvider` + `WindowsForegroundProbe`, `WindowsAutoStartService` | The only place for SQL, Win32 and registry calls. Each has an `I*.hpp` interface next to it. Session rules live in the platform-free `PollingActivityProvider`; Win32 only in the probe. |
+| `src/domain/` | `Activity`, `ActivityStats`, `TrackingSchedule`, `CategoryRules`, `PrivacyRules` (both on `WindowMatcher`), `DailyGoals`, `GoalDigest` | Value types + pure logic. No Qt widgets, no DB, no `QObject` unless needed for meta-types. |
+| `src/application/` | `ActivityService` (writes), `ActivityQueryService` (reads), `GoalService` (today's goals, crossing announcements), `GoalDigestService` (daily summary) | Orchestration. Talks to `I*` interfaces only, never to `QSql*` or Win32. |
+| `src/infrastructure/` | `SqliteActivityRepository`, `PollingActivityProvider` + `WindowsForegroundProbe`, `WindowsAutoStartService`, `TrayNotifier` (`INotifier`) | The only place for SQL, Win32 and registry calls. Each has an `I*.hpp` interface next to it. Session rules live in the platform-free `PollingActivityProvider`; Win32 only in the probe. |
 | `src/ui/` | `*Controller` (QML-facing façade), `*Model` (`QAbstractListModel`), `ActivityFormat` | No business rules; formats and exposes. |
 | `src/ui/qml/` | Views and components | Uses the `Theme` singleton for every colour/metric. |
 | `src/core/` | `AppInitializer`, `AppSettings`, `AppEnvironment`, `TranslationManager`, `FileLogger` | Wiring and process-wide concerns. |
@@ -96,11 +96,29 @@ them back (`joinContiguous`); log edits address a whole joined session through
 its window and time span, never a single row. `stats()` still counts rows, so
 "sessions" and "longest session" there are per flush cut.
 
+Daily goals (Settings → Daily goals) are `QSettings` JSON under
+`goals/daily`, each naming a category by its exact name: a renamed rule does
+not carry over, the goal is flagged instead. `GoalService` re-measures today
+(local midnight to midnight, through `ActivityQueryService::categoryTotals`)
+after every `activityRecorded` and on a new day, and emits `goalCrossed` at
+most once per goal per day. What is already crossed at its first look is never
+announced, so a restart does not repeat the day's notifications.
+`GoalDigestService` sends the daily summary (yesterday's results, today's
+goals) when work starts -- the schedule's start time, on its days -- or at a
+set time, checking once a minute. One found more than 10 min late (app closed,
+machine asleep) is overdue and goes out at once unless
+`goals/digestCatchUp` is off; `goals/digestLastDay` keeps it to one a day
+across restarts.
+
 ## Known landmines
 
 - **`lupdate` and QML**: a qtbase-only `lupdate` has no QML parser and silently
   drops every `qsTr()` in `.qml`, leaving the `.ts` files half-empty. See
   `/i18n`.
+- **`QApplication`, not `QGuiApplication`**: the tray icon (`QSystemTrayIcon`)
+  is Qt Widgets. Linking `Qt6::Widgets` switches AUTOUIC on, and vcpkg's `uic`
+  cannot start at configure time, so `CMakeLists.txt` sets
+  `CMAKE_AUTOUIC OFF`. There are no `.ui` forms.
 - **Qt deployment**: `windeployqt` is unusable with vcpkg's split debug/release
   layout. `CMakeLists.txt` instead generates a `qt.conf` next to the exe and
   copies `Qt6*.dll` + `sqlite3.dll`. "No Qt platform plugin could be

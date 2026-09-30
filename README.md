@@ -2,7 +2,12 @@
 
 Qt 6.10 QML desktop application that tracks which application you are actively
 using and shows where the time went, per application and per category
-(rules by application name and window-title regex).
+(rules by application name and window-title regex). Daily goals set a limit
+("at most 1 h of distractions") or a target ("at least 4 h of work") per
+category; the Day page shows today's progress and the tray says when a limit is
+passed or a target reached. A daily summary of yesterday's goals arrives when
+work starts (or at a set time); one missed while the app was closed comes on
+the next launch, unless that is turned off.
 
 ## Prerequisites
 
@@ -93,8 +98,9 @@ python bootstrap.py e2e     # end-to-end: drives the real app and real windows
 ```
 
 `e2e` runs Chronexa with `--profile <tempdir>`, so your own history and settings
-are never touched, but it takes the foreground for about half a minute — do not
-type while it runs.
+are never touched, but it takes the foreground for about five minutes (the goals
+scenario holds a window across three minute flushes) — do not type while it
+runs. It needs the Debug build: the goals scenario reads info-level log lines.
 
 ## CMake Flags
 

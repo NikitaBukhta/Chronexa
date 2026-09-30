@@ -39,6 +39,7 @@ QtObject {
 
     readonly property color good: "#0ca30c"
     readonly property color warning: "#fab219"
+    readonly property color bad: dark ? "#e66767" : "#e34948"
 
     readonly property var seriesLight: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
     readonly property var seriesDark: ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]

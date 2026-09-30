@@ -184,4 +184,90 @@ QString joinApps(const QStringList &apps) {
   return apps.join(QStringLiteral(", "));
 }
 
+QString goalKind(GoalKind kind) {
+  return kind == GoalKind::Target ? QObject::tr("at least")
+                                  : QObject::tr("at most");
+}
+
+QString goalAmount(const GoalProgress &progress) {
+  return QObject::tr("%1 of %2")
+      .arg(duration(progress.seconds, true),
+           duration(progress.goal.thresholdSeconds(), true));
+}
+
+QString goalStatus(const GoalProgress &progress) {
+  switch (progress.state()) {
+  case GoalState::Within:
+    return QObject::tr("%1 left").arg(
+        duration(progress.remainingSeconds(), true));
+  case GoalState::Exceeded:
+    return QObject::tr("%1 over").arg(duration(progress.overSeconds(), true));
+  case GoalState::Short:
+    return QObject::tr("%1 to go")
+        .arg(duration(progress.remainingSeconds(), true));
+  case GoalState::Reached:
+    return QObject::tr("Reached");
+  }
+  return {};
+}
+
+QString goalAlertTitle(const GoalProgress &progress) {
+  return progress.goal.kind == GoalKind::Target
+             ? QObject::tr("Goal reached: %1").arg(progress.goal.category)
+             : QObject::tr("Limit passed: %1").arg(progress.goal.category);
+}
+
+QString goalAlertMessage(const GoalProgress &progress) {
+  const QString spent = duration(progress.seconds, true);
+  const QString threshold = duration(progress.goal.thresholdSeconds(), true);
+  return progress.goal.kind == GoalKind::Target
+             ? QObject::tr("%1 today, the goal was %2. Well done.")
+                   .arg(spent, threshold)
+             : QObject::tr("%1 today, the limit is %2.").arg(spent, threshold);
+}
+
+QString goalLine(const DailyGoal &goal) {
+  return QObject::tr("%1: %2 %3")
+      .arg(goal.category, goalKind(goal.kind),
+           duration(goal.thresholdSeconds(), true));
+}
+
+QString digestTitle(const GoalDigest &digest) {
+  if (digest.results.isEmpty()) {
+    return QObject::tr("Today's goals");
+  }
+  return QObject::tr("Yesterday's goals: %1 of %2 met")
+      .arg(digest.metCount())
+      .arg(digest.results.size());
+}
+
+QString digestMessage(const GoalDigest &digest) {
+  QStringList lines;
+  for (const GoalProgress &result : digest.results) {
+    lines.append(QStringLiteral("%1 %2: %3")
+                     .arg(isMet(result) ? QStringLiteral(u"\u2713")
+                                        : QStringLiteral(u"\u2717"),
+                          result.goal.category, goalAmount(result)));
+  }
+  if (!digest.today.isEmpty()) {
+    QStringList today;
+    for (const DailyGoal &goal : digest.today) {
+      today.append(goalLine(goal));
+    }
+    lines.append(
+        QObject::tr("Today: %1").arg(today.join(QStringLiteral("; "))));
+  }
+  return lines.join(QLatin1Char('\n'));
+}
+
+QString nextDigest(const QDateTime &due, DigestTime when) {
+  if (when == DigestTime::Off) {
+    return QObject::tr("No daily summary.");
+  }
+  if (!due.isValid()) {
+    return QObject::tr("No work days in the schedule, so no summary is due.");
+  }
+  return QObject::tr("Next: %1, %2").arg(dayLabel(due.date()), clock(due));
+}
+
 } // namespace chronexa::activity::format

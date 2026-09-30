@@ -213,6 +213,21 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin: Theme.gapLoose
                 Layout.rightMargin: Theme.gapLoose
+                visible: root.showingToday && goalController.hasGoals
+                title: qsTr("Today's goals")
+                subtitle: goalController.summary
+
+                GoalProgressList {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Theme.gapTight
+                    progressModel: goalController.progress
+                }
+            }
+
+            Card {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.gapLoose
+                Layout.rightMargin: Theme.gapLoose
                 title: qsTr("Through the day")
                 subtitle: qsTr("Each block is one session, placed where it happened")
 

@@ -40,6 +40,7 @@ user32.PostMessageW.argtypes = [wt.HWND, wt.UINT, wt.WPARAM, wt.LPARAM]
 user32.GetWindowThreadProcessId.argtypes = [wt.HWND, ctypes.POINTER(wt.DWORD)]
 user32.IsWindowVisible.argtypes = [wt.HWND]
 user32.GetWindowTextW.argtypes = [wt.HWND, wt.LPWSTR, ctypes.c_int]
+user32.GetClassNameW.argtypes = [wt.HWND, wt.LPWSTR, ctypes.c_int]
 WNDENUMPROC = ctypes.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
 user32.EnumWindows.argtypes = [WNDENUMPROC, wt.LPARAM]
 
@@ -51,6 +52,30 @@ WM_CLOSE = 0x0010
 
 class E2EFailure(Exception):
     pass
+
+
+def foreground_description() -> str:
+    """Who holds the foreground: for a failure message, not for control."""
+    hwnd = user32.GetForegroundWindow()
+    if not hwnd:
+        return "nothing (the desktop is locked or switching)"
+    title = ctypes.create_unicode_buffer(256)
+    user32.GetWindowTextW(hwnd, title, 256)
+    klass = ctypes.create_unicode_buffer(256)
+    user32.GetClassNameW(hwnd, klass, 256)
+    pid = wt.DWORD()
+    user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+    exe = "?"
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    handle = kernel32.OpenProcess(0x1000, False, pid.value)
+    if handle:
+        buffer = ctypes.create_unicode_buffer(512)
+        size = wt.DWORD(512)
+        if kernel32.QueryFullProcessImageNameW(handle, 0, buffer,
+                                                ctypes.byref(size)):
+            exe = Path(buffer.value).name
+        kernel32.CloseHandle(handle)
+    return f"'{title.value}' (class {klass.value}, {exe}, pid {pid.value})"
 
 
 def check(condition, message):
@@ -67,7 +92,9 @@ def write_profile(profile: Path) -> None:
     ini.write_text(
         "[categories]\n"
         f'rules="{escaped}"\n'
-        "[general]\n"
+        # Not "[general]": QSettings reads that as its special [General]
+        # section, i.e. no group at all, and the language is never found.
+        "[%General]\n"
         "language=en\n",
         encoding="utf-8",
     )
@@ -163,7 +190,8 @@ def drive_window() -> list:
               f"could not bring the test window to the front for '{title}'")
         pump(root, seconds)
         check(user32.GetForegroundWindow() == hwnd,
-              f"the test window lost the foreground during '{title}'")
+              f"the test window lost the foreground during '{title}' to "
+              f"{foreground_description()}")
 
     try:
         hold(f"YouTube - cats - {MARKER}", 5)
@@ -233,15 +261,20 @@ def check_log(profile: Path) -> None:
                 raise E2EFailure(f"QML reported a problem: {line}")
 
 
-def check_real_history_untouched() -> None:
+def check_real_history_untouched(since_ms: int) -> None:
+    # Only this run's rows: a real Chronexa left open during an earlier run
+    # recorded the test windows like any other, and those rows stay behind.
     real = Path(os.environ.get("APPDATA", "")) / "Chronexa" / "Chronexa" / "chronexa.db"
     if not real.exists():
         return
     with contextlib.closing(
             sqlite3.connect(f"file:{real}?mode=ro", uri=True)) as db:
-        leaked = db.execute("SELECT count(*) FROM activity WHERE title LIKE ?",
-                            (f"%{MARKER}%",)).fetchone()[0]
-    check(leaked == 0, f"{leaked} test sessions leaked into {real}")
+        leaked = db.execute("SELECT count(*) FROM activity "
+                            "WHERE title LIKE ? AND ended_on >= ?",
+                            (f"%{MARKER}%", since_ms)).fetchone()[0]
+    check(leaked == 0,
+          f"{leaked} test sessions reached {real} during this run -- a leak "
+          "past --profile, or your own Chronexa was running and recorded them")
 
 
 def main() -> int:
@@ -249,6 +282,7 @@ def main() -> int:
         print(__doc__)
         return 2
     exe = Path(sys.argv[1])
+    started_ms = int(time.time() * 1000)
     profile = Path(tempfile.mkdtemp(prefix="chronexa-e2e-"))
     write_profile(profile)
 
@@ -267,7 +301,7 @@ def main() -> int:
         rows = recorded_rows(profile / "chronexa.db")
         verify(rows, expected)
         check_log(profile)
-        check_real_history_untouched()
+        check_real_history_untouched(started_ms)
     except E2EFailure as failure:
         print(f"FAIL: {failure}")
         print(f"Profile kept for inspection: {profile}")

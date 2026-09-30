@@ -23,7 +23,7 @@ import tkinter as tk
 from pathlib import Path
 
 from e2e_categories import (E2EFailure, bring_to_front, check, check_log,
-                            close, pump, user32, wait_for_fresh_minute,
+                            close, foreground_description, pump, user32, wait_for_fresh_minute,
                             wait_for_window)
 
 MARKER = "chronexa-e2e-privacy"
@@ -46,7 +46,9 @@ def write_profile(profile: Path) -> None:
     ini.write_text(
         "[privacy]\n"
         f'rules="{escaped}"\n'
-        "[general]\n"
+        # Not "[general]": QSettings reads that as its special [General]
+        # section, i.e. no group at all, and the language is never found.
+        "[%General]\n"
         "language=en\n",
         encoding="utf-8",
     )
@@ -69,7 +71,8 @@ def drive_window() -> None:
               f"could not bring the test window to the front for '{title}'")
         pump(root, seconds)
         check(user32.GetForegroundWindow() == hwnd,
-              f"the test window lost the foreground during '{title}'")
+              f"the test window lost the foreground during '{title}' to "
+              f"{foreground_description()}")
 
     try:
         hold(f"Docs - {MARKER}", 5)

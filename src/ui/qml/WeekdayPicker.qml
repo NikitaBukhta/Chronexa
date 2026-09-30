@@ -6,6 +6,7 @@ RowLayout {
 
     property int days: 0
     property bool editable: true
+    property int chipWidth: 40
 
     signal dayToggled(int dayOfWeek)
 
@@ -23,7 +24,7 @@ RowLayout {
             readonly property int dayOfWeek: index + 1
             readonly property bool selected: (root.days & (1 << index)) !== 0
 
-            implicitWidth: 40
+            implicitWidth: root.chipWidth
             implicitHeight: Theme.controlHeight + 2
             radius: Theme.radiusSmall
             color: chip.selected ? Theme.accent : mouse.containsMouse ? Theme.hover : "transparent"

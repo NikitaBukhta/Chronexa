@@ -9,9 +9,11 @@ project(Chronexa VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Sql Test LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Sql Widgets Test LinguistTools)
 
 qt_standard_project_setup(REQUIRES 6.8)
+
+set(CMAKE_AUTOUIC OFF)
 
 qt_add_executable(Chronexa
     src/main.cpp
@@ -39,11 +41,19 @@ qt_add_executable(Chronexa
     src/domain/activity/PrivacyRules.cpp
     src/domain/activity/WindowMatcher.hpp
     src/domain/activity/WindowMatcher.cpp
+    src/domain/activity/DailyGoals.hpp
+    src/domain/activity/DailyGoals.cpp
+    src/domain/activity/GoalDigest.hpp
+    src/domain/activity/GoalDigest.cpp
 
     src/application/activity/ActivityService.hpp
     src/application/activity/ActivityService.cpp
     src/application/activity/ActivityQueryService.hpp
     src/application/activity/ActivityQueryService.cpp
+    src/application/activity/GoalService.hpp
+    src/application/activity/GoalService.cpp
+    src/application/activity/GoalDigestService.hpp
+    src/application/activity/GoalDigestService.cpp
 
     src/infrastructure/activity/IUserActivityProvider.hpp
     src/infrastructure/activity/IActivityRepository.hpp
@@ -58,6 +68,9 @@ qt_add_executable(Chronexa
     src/infrastructure/system/IAutoStartService.hpp
     src/infrastructure/system/WindowsAutoStartService.hpp
     src/infrastructure/system/WindowsAutoStartService.cpp
+    src/infrastructure/system/INotifier.hpp
+    src/infrastructure/system/TrayNotifier.hpp
+    src/infrastructure/system/TrayNotifier.cpp
 
     src/ui/activity/ActivityFormat.hpp
     src/ui/activity/ActivityFormat.cpp
@@ -67,6 +80,12 @@ qt_add_executable(Chronexa
     src/ui/activity/AppTotalsModel.cpp
     src/ui/activity/CategoryRulesModel.hpp
     src/ui/activity/CategoryRulesModel.cpp
+    src/ui/activity/GoalController.hpp
+    src/ui/activity/GoalController.cpp
+    src/ui/activity/GoalProgressModel.hpp
+    src/ui/activity/GoalProgressModel.cpp
+    src/ui/activity/GoalsModel.hpp
+    src/ui/activity/GoalsModel.cpp
     src/ui/activity/PrivacyRulesModel.hpp
     src/ui/activity/PrivacyRulesModel.cpp
     src/ui/activity/TimeBucketModel.hpp
@@ -88,6 +107,7 @@ target_link_libraries(Chronexa PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
     Qt6::Sql
+    Qt6::Widgets
 )
 
 # version: the executable file description, used as an application's display name.

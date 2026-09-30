@@ -5,9 +5,14 @@
 
 #include "application/activity/ActivityQueryService.hpp"
 #include "application/activity/ActivityService.hpp"
+#include "application/activity/GoalDigestService.hpp"
+#include "application/activity/GoalService.hpp"
 #include "infrastructure/activity/SqliteActivityRepository.hpp"
+#include "infrastructure/system/TrayNotifier.hpp"
 #include "ui/activity/ActivityQueryController.hpp"
 #include "ui/activity/CategoryRulesModel.hpp"
+#include "ui/activity/GoalController.hpp"
+#include "ui/activity/GoalsModel.hpp"
 #include "ui/activity/PrivacyRulesModel.hpp"
 #include "ui/activity/UserActivityController.hpp"
 #include "ui/settings/SettingsController.hpp"
@@ -17,6 +22,7 @@
 #include <QLoggingCategory>
 #include <QQmlContext>
 #include <QQuickStyle>
+#include <QWindow>
 #include <QtSystemDetection>
 
 #ifdef Q_OS_WIN
@@ -29,6 +35,8 @@ using OSSpecificAutoStart = chronexa::system::WindowsAutoStartService;
 namespace {
 
 Q_LOGGING_CATEGORY(lcInit, "chronexa.core.init")
+
+constexpr int kDigestFirstCheckMs = 3000;
 
 } // namespace
 
@@ -62,6 +70,10 @@ void AppInitializer::shutdown() {
   _logQuery.reset();
   _periodQuery.reset();
   _dayQuery.reset();
+  _goalController.reset();
+  _goalDigest.reset();
+  _goalService.reset();
+  _dailyGoals.reset();
   _privacyRules.reset();
   _categoryRules.reset();
   _activityController.reset();
@@ -70,6 +82,7 @@ void AppInitializer::shutdown() {
   _activityRepository.reset();
 
   _settingsController.reset();
+  _tray.reset();
   _autoStart.reset();
   _translations.reset();
   _settings.reset();
@@ -116,6 +129,9 @@ void AppInitializer::buildSettingsModule() {
   _settings = std::make_unique<AppSettings>();
   _translations = std::make_unique<TranslationManager>(_engine.get());
   _autoStart = std::make_unique<OSSpecificAutoStart>();
+  _tray = std::make_unique<system::TrayNotifier>();
+  QObject::connect(_translations.get(), &TranslationManager::languageApplied,
+                   _tray.get(), &system::TrayNotifier::retranslate);
   _settingsController = std::make_unique<settings::SettingsController>(
       _settings.get(), _autoStart.get(), _translations.get());
 
@@ -146,6 +162,42 @@ void AppInitializer::buildActivityModule() {
   applyCategoryRules();
   QObject::connect(_settings.get(), &AppSettings::categoryRulesChanged,
                    _activityService.get(), [this]() { applyCategoryRules(); });
+
+  // After the category rules: goals are measured through them, and the
+  // connections below run after applyCategoryRules() for the same reason.
+  _dailyGoals = std::make_unique<activity::GoalsModel>(_settings.get());
+  _goalService =
+      std::make_unique<activity::GoalService>(*_activityQueryService);
+  _goalService->setGoals(_settings->dailyGoals());
+  QObject::connect(
+      _settings.get(), &AppSettings::dailyGoalsChanged, _goalService.get(),
+      [this]() { _goalService->setGoals(_settings->dailyGoals()); });
+  QObject::connect(_settings.get(), &AppSettings::categoryRulesChanged,
+                   _goalService.get(), &activity::GoalService::refresh);
+  // Also covers a clear and every log edit: both announce activityRecorded.
+  QObject::connect(_activityService.get(),
+                   &activity::ActivityService::activityRecorded,
+                   _goalService.get(), &activity::GoalService::refresh);
+
+  _goalDigest =
+      std::make_unique<activity::GoalDigestService>(*_activityQueryService);
+  _goalDigest->setLastSentDay(_settings->goalDigestLastDay());
+  applyGoalDigestSettings();
+  for (auto signal :
+       {&AppSettings::goalDigestChanged, &AppSettings::scheduleChanged,
+        &AppSettings::dailyGoalsChanged}) {
+    QObject::connect(_settings.get(), signal, _goalDigest.get(),
+                     [this]() { applyGoalDigestSettings(); });
+  }
+  QObject::connect(_goalDigest.get(),
+                   &activity::GoalDigestService::lastSentDayChanged,
+                   _settings.get(), &AppSettings::setGoalDigestLastDay);
+
+  _goalController = std::make_unique<activity::GoalController>(
+      _goalService.get(), _settings.get(), _tray.get(), _goalDigest.get());
+  QObject::connect(_translations.get(), &TranslationManager::languageApplied,
+                   _goalController.get(),
+                   &activity::GoalController::retranslate);
 
   _activityService->setSchedule(_settings->schedule());
   _activityService->setTrackingEnabled(_settings->trackingEnabled());
@@ -201,6 +253,13 @@ void AppInitializer::applyCategoryRules() {
   _activityService->setCategoryRules(rules);
 }
 
+void AppInitializer::applyGoalDigestSettings() {
+  _goalDigest->setGoals(_settings->dailyGoals());
+  _goalDigest->setPlan(_settings->digestPlan());
+  _goalDigest->setSchedule(_settings->schedule());
+  _goalDigest->setCatchUp(_settings->goalDigestCatchUp());
+}
+
 void AppInitializer::applyPrivacyRules() {
   _activityService->setPrivacyRules(_settings->privacyRules());
 }
@@ -216,6 +275,8 @@ void AppInitializer::registerQmlTypes() {
   context->setContextProperty("monthQuery", _monthQuery.get());
   context->setContextProperty("categoryRules", _categoryRules.get());
   context->setContextProperty("privacyRules", _privacyRules.get());
+  context->setContextProperty("dailyGoals", _dailyGoals.get());
+  context->setContextProperty("goalController", _goalController.get());
 
   QObject::connect(
       _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app,
@@ -223,7 +284,42 @@ void AppInitializer::registerQmlTypes() {
 
   _engine->loadFromModule("Chronexa", "Main");
 
+  QObject::connect(_tray.get(), &system::TrayNotifier::openRequested, this,
+                   &AppInitializer::showMainWindow);
+  QObject::connect(_tray.get(), &system::TrayNotifier::quitRequested, this,
+                   &AppInitializer::closeMainWindow);
+
+  // Last, with the window and the tray up: the first look is where a summary
+  // missed while the app was closed goes out.
+  _goalDigest->start(kDigestFirstCheckMs);
+
   qCInfo(lcInit) << "QML types registered";
+}
+
+QWindow *AppInitializer::mainWindow() const {
+  const QList<QObject *> roots = _engine->rootObjects();
+  return roots.isEmpty() ? nullptr : qobject_cast<QWindow *>(roots.first());
+}
+
+void AppInitializer::showMainWindow() {
+  QWindow *window = mainWindow();
+  if (window == nullptr) {
+    return;
+  }
+  // Only the minimised flag goes: a maximised window comes back maximised.
+  window->setWindowStates(window->windowStates() & ~Qt::WindowMinimized);
+  window->show();
+  window->raise();
+  window->requestActivate();
+}
+
+void AppInitializer::closeMainWindow() {
+  QWindow *window = mainWindow();
+  if (window == nullptr) {
+    QCoreApplication::quit();
+    return;
+  }
+  window->close();
 }
 
 } // namespace chronexa::core

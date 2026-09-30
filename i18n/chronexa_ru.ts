@@ -24,6 +24,17 @@
     </message>
 </context>
 <context>
+    <name>CategoryPicker</name>
+    <message>
+        <source>Pick a category</source>
+        <translation>Выберите категорию</translation>
+    </message>
+    <message>
+        <source>No categories yet — add a rule above.</source>
+        <translation>Категорий пока нет — добавьте правило выше.</translation>
+    </message>
+</context>
+<context>
     <name>CategoryRuleList</name>
     <message>
         <source>Category</source>
@@ -172,6 +183,10 @@
         <source>Category</source>
         <translation>Категория</translation>
     </message>
+    <message>
+        <source>Today's goals</source>
+        <translation>Цели на сегодня</translation>
+    </message>
 </context>
 <context>
     <name>DayStrip</name>
@@ -185,6 +200,29 @@
     <message>
         <source>No activity recorded</source>
         <translation>Активность не записана</translation>
+    </message>
+</context>
+<context>
+    <name>GoalList</name>
+    <message>
+        <source>At most</source>
+        <translation>Не больше</translation>
+    </message>
+    <message>
+        <source>At least</source>
+        <translation>Не меньше</translation>
+    </message>
+    <message>
+        <source>a day</source>
+        <translation>в день</translation>
+    </message>
+    <message>
+        <source>No goals — add one, e.g. at most an hour of distractions a day.</source>
+        <translation>Целей нет — добавьте, например, не больше часа отвлечений в день.</translation>
+    </message>
+    <message>
+        <source>Add goal</source>
+        <translation>Добавить цель</translation>
     </message>
 </context>
 <context>
@@ -580,6 +618,78 @@
         <source>Week of %1</source>
         <translation>Неделя %1</translation>
     </message>
+    <message>
+        <source>at least</source>
+        <translation>не меньше</translation>
+    </message>
+    <message>
+        <source>at most</source>
+        <translation>не больше</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 из %2</translation>
+    </message>
+    <message>
+        <source>%1 left</source>
+        <translation>осталось %1</translation>
+    </message>
+    <message>
+        <source>%1 over</source>
+        <translation>превышено на %1</translation>
+    </message>
+    <message>
+        <source>%1 to go</source>
+        <translation>ещё %1</translation>
+    </message>
+    <message>
+        <source>Reached</source>
+        <translation>Достигнуто</translation>
+    </message>
+    <message>
+        <source>Goal reached: %1</source>
+        <translation>Цель достигнута: %1</translation>
+    </message>
+    <message>
+        <source>Limit passed: %1</source>
+        <translation>Лимит превышен: %1</translation>
+    </message>
+    <message>
+        <source>%1 today, the goal was %2. Well done.</source>
+        <translation>%1 сегодня, цель — %2. Отличная работа.</translation>
+    </message>
+    <message>
+        <source>%1 today, the limit is %2.</source>
+        <translation>%1 сегодня, а лимит — %2.</translation>
+    </message>
+    <message>
+        <source>%1: %2 %3</source>
+        <translation>%1: %2 %3</translation>
+    </message>
+    <message>
+        <source>Today's goals</source>
+        <translation>Цели на сегодня</translation>
+    </message>
+    <message>
+        <source>Yesterday's goals: %1 of %2 met</source>
+        <translation>Цели вчера: выполнено %1 из %2</translation>
+    </message>
+    <message>
+        <source>Today: %1</source>
+        <translation>Сегодня: %1</translation>
+    </message>
+    <message>
+        <source>No daily summary.</source>
+        <translation>Ежедневной сводки нет.</translation>
+    </message>
+    <message>
+        <source>No work days in the schedule, so no summary is due.</source>
+        <translation>В расписании нет рабочих дней, поэтому сводки не будет.</translation>
+    </message>
+    <message>
+        <source>Next: %1, %2</source>
+        <translation>Следующая: %1, %2</translation>
+    </message>
 </context>
 <context>
     <name>SessionEditor</name>
@@ -821,6 +931,54 @@
         <source>Apply to history…</source>
         <translation>Применить к истории…</translation>
     </message>
+    <message>
+        <source>Daily goals</source>
+        <translation>Цели на день</translation>
+    </message>
+    <message>
+        <source>A limit or a target per category, counted from midnight. Progress shows on the Day page.</source>
+        <translation>Лимит или цель для категории, отсчёт с полуночи. Прогресс виден на странице «День».</translation>
+    </message>
+    <message>
+        <source>Notify in the tray</source>
+        <translation>Уведомлять в трее</translation>
+    </message>
+    <message>
+        <source>When a limit is passed or a target reached, once a day per goal, and the daily summary below.</source>
+        <translation>Когда лимит превышен или цель достигнута — раз в день для каждой цели, а также ежедневная сводка ниже.</translation>
+    </message>
+    <message>
+        <source>No system tray is available.</source>
+        <translation>Системный трей недоступен.</translation>
+    </message>
+    <message>
+        <source>When work starts</source>
+        <translation>В начале работы</translation>
+    </message>
+    <message>
+        <source>At a set time</source>
+        <translation>В заданное время</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation>Выключено</translation>
+    </message>
+    <message>
+        <source>Daily summary</source>
+        <translation>Ежедневная сводка</translation>
+    </message>
+    <message>
+        <source>Yesterday's results and today's goals. %1</source>
+        <translation>Вчерашние итоги и цели на сегодня. %1</translation>
+    </message>
+    <message>
+        <source>Send a missed summary on launch</source>
+        <translation>Отправлять пропущенную сводку при запуске</translation>
+    </message>
+    <message>
+        <source>If Chronexa was closed or the computer asleep at that time, the summary comes as soon as it runs again.</source>
+        <translation>Если в это время Chronexa была закрыта или компьютер спал, сводка придёт, как только она снова заработает.</translation>
+    </message>
 </context>
 <context>
     <name>TimelineBand</name>
@@ -887,6 +1045,13 @@
     </message>
 </context>
 <context>
+    <name>chronexa::activity::GoalController</name>
+    <message>
+        <source>%1 of %2 on track</source>
+        <translation>%1 из %2 по плану</translation>
+    </message>
+</context>
+<context>
     <name>chronexa::activity::UserActivityController</name>
     <message>
         <source>No day is selected in the schedule</source>
@@ -946,6 +1111,21 @@
     <message>
         <source>%1 overnight · %2</source>
         <translation>%1 через ночь · %2</translation>
+    </message>
+</context>
+<context>
+    <name>chronexa::system::TrayNotifier</name>
+    <message>
+        <source>Chronexa</source>
+        <translation>Chronexa</translation>
+    </message>
+    <message>
+        <source>Open Chronexa</source>
+        <translation>Открыть Chronexa</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation>Выйти</translation>
     </message>
 </context>
 </TS>

@@ -16,6 +16,12 @@ constexpr auto kScheduleDays = "tracking/scheduleDays";
 constexpr auto kLanguage = "general/language";
 constexpr auto kCategoryRules = "categories/rules";
 constexpr auto kPrivacyRules = "privacy/rules";
+constexpr auto kDailyGoals = "goals/daily";
+constexpr auto kGoalNotifications = "goals/notify";
+constexpr auto kDigestTime = "goals/digestTime";
+constexpr auto kDigestMinutes = "goals/digestMinutes";
+constexpr auto kDigestCatchUp = "goals/digestCatchUp";
+constexpr auto kDigestLastDay = "goals/digestLastDay";
 
 constexpr int kMinutesPerDay = 24 * 60;
 
@@ -54,6 +60,14 @@ AppSettings::AppSettings(QObject *parent)
       activity::parseCategoryRules(_store->value(kCategoryRules).toString());
   _privacyRules =
       activity::parsePrivacyRules(_store->value(kPrivacyRules).toString());
+  _dailyGoals =
+      activity::parseDailyGoals(_store->value(kDailyGoals).toString());
+  _goalNotifications = _store->value(kGoalNotifications, true).toBool();
+  _digestPlan.when =
+      activity::digestTimeFromKey(_store->value(kDigestTime).toString());
+  _digestPlan.at = timeFromMinutes(
+      _store->value(kDigestMinutes, minutesFromTime(QTime(9, 0))).toInt());
+  _digestCatchUp = _store->value(kDigestCatchUp, true).toBool();
 
   qCInfo(lcSettings) << "Settings loaded from" << _store->fileName();
 }
@@ -178,6 +192,85 @@ void AppSettings::setPrivacyRules(const QList<activity::PrivacyRule> &rules) {
   store(QLatin1String(kPrivacyRules), activity::serializePrivacyRules(rules));
   qCInfo(lcSettings) << "Privacy rules saved:" << rules.size();
   emit privacyRulesChanged();
+}
+
+bool AppSettings::hasDailyGoals() const {
+  return _store->contains(QLatin1String(kDailyGoals));
+}
+
+const QList<activity::DailyGoal> &AppSettings::dailyGoals() const {
+  return _dailyGoals;
+}
+
+void AppSettings::setDailyGoals(const QList<activity::DailyGoal> &goals) {
+  if (_dailyGoals == goals && hasDailyGoals()) {
+    return;
+  }
+  _dailyGoals = goals;
+  store(QLatin1String(kDailyGoals), activity::serializeDailyGoals(goals));
+  qCInfo(lcSettings) << "Daily goals saved:" << goals.size();
+  emit dailyGoalsChanged();
+}
+
+bool AppSettings::goalNotifications() const { return _goalNotifications; }
+
+void AppSettings::setGoalNotifications(bool enabled) {
+  if (_goalNotifications == enabled) {
+    return;
+  }
+  _goalNotifications = enabled;
+  store(QLatin1String(kGoalNotifications), enabled);
+  emit goalNotificationsChanged();
+}
+
+QString AppSettings::goalDigestTime() const {
+  return activity::digestTimeKey(_digestPlan.when);
+}
+
+void AppSettings::setGoalDigestTime(const QString &key) {
+  const activity::DigestTime when = activity::digestTimeFromKey(key);
+  if (_digestPlan.when == when) {
+    return;
+  }
+  _digestPlan.when = when;
+  store(QLatin1String(kDigestTime), activity::digestTimeKey(when));
+  emit goalDigestChanged();
+}
+
+int AppSettings::goalDigestMinutes() const {
+  return minutesFromTime(_digestPlan.at);
+}
+
+void AppSettings::setGoalDigestMinutes(int minutes) {
+  const QTime time = timeFromMinutes(minutes);
+  if (_digestPlan.at == time) {
+    return;
+  }
+  _digestPlan.at = time;
+  store(QLatin1String(kDigestMinutes), minutesFromTime(time));
+  emit goalDigestChanged();
+}
+
+bool AppSettings::goalDigestCatchUp() const { return _digestCatchUp; }
+
+void AppSettings::setGoalDigestCatchUp(bool enabled) {
+  if (_digestCatchUp == enabled) {
+    return;
+  }
+  _digestCatchUp = enabled;
+  store(QLatin1String(kDigestCatchUp), enabled);
+  emit goalDigestChanged();
+}
+
+activity::DigestPlan AppSettings::digestPlan() const { return _digestPlan; }
+
+QDate AppSettings::goalDigestLastDay() const {
+  return QDate::fromString(_store->value(kDigestLastDay).toString(),
+                           Qt::ISODate);
+}
+
+void AppSettings::setGoalDigestLastDay(const QDate &day) {
+  store(QLatin1String(kDigestLastDay), day.toString(Qt::ISODate));
 }
 
 } // namespace chronexa::core

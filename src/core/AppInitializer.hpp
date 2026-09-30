@@ -6,12 +6,18 @@
 
 #include <memory>
 
+class QWindow;
+
 namespace chronexa::activity {
 
 class ActivityQueryController;
 class ActivityQueryService;
 class ActivityService;
 class CategoryRulesModel;
+class GoalController;
+class GoalDigestService;
+class GoalService;
+class GoalsModel;
 class PrivacyRulesModel;
 class SqliteActivityRepository;
 class UserActivityController;
@@ -27,6 +33,7 @@ class SettingsController;
 namespace chronexa::system {
 
 class IAutoStartService;
+class TrayNotifier;
 
 } // namespace chronexa::system
 
@@ -50,7 +57,11 @@ private:
   void buildActivityModule();
   void applyCategoryRules();
   void applyPrivacyRules();
+  void applyGoalDigestSettings();
   void registerQmlTypes();
+  QWindow *mainWindow() const;
+  void showMainWindow();
+  void closeMainWindow();
   void shutdown();
 
 private:
@@ -60,6 +71,7 @@ private:
   std::unique_ptr<AppSettings> _settings;
   std::unique_ptr<TranslationManager> _translations;
   std::unique_ptr<system::IAutoStartService> _autoStart;
+  std::unique_ptr<system::TrayNotifier> _tray;
   std::unique_ptr<settings::SettingsController> _settingsController;
 
   std::unique_ptr<activity::SqliteActivityRepository> _activityRepository;
@@ -68,6 +80,10 @@ private:
   std::unique_ptr<activity::UserActivityController> _activityController;
   std::unique_ptr<activity::CategoryRulesModel> _categoryRules;
   std::unique_ptr<activity::PrivacyRulesModel> _privacyRules;
+  std::unique_ptr<activity::GoalsModel> _dailyGoals;
+  std::unique_ptr<activity::GoalService> _goalService;
+  std::unique_ptr<activity::GoalDigestService> _goalDigest;
+  std::unique_ptr<activity::GoalController> _goalController;
 
   std::unique_ptr<activity::ActivityQueryController> _dayQuery;
   std::unique_ptr<activity::ActivityQueryController> _periodQuery;

@@ -6,6 +6,7 @@
 #include "infrastructure/activity/IActivityRepository.hpp"
 #include "infrastructure/activity/IForegroundProbe.hpp"
 #include "infrastructure/activity/IUserActivityProvider.hpp"
+#include "infrastructure/system/INotifier.hpp"
 
 #include <QDateTime>
 #include <QList>
@@ -206,5 +207,20 @@ inline QDateTime utc(int hour, int minute, int second = 0) {
   return {QDate(2026, 9, 1), QTime(hour, minute, second),
                    QTimeZone::UTC};
 }
+
+class FakeNotifier : public chronexa::system::INotifier {
+public:
+  struct Message {
+    QString title;
+    QString text;
+  };
+  QList<Message> messages;
+  bool supported = true;
+
+  bool isSupported() const override { return supported; }
+  void notify(const QString &title, const QString &message) override {
+    messages.append({title, message});
+  }
+};
 
 } // namespace chronexa::activity::testing

@@ -8,13 +8,13 @@
 #include "application/activity/ActivityQueryService.hpp"
 #include "application/activity/ActivityService.hpp"
 #include "fakes/Fakes.hpp"
+#include "fakes/QmlHarness.hpp"
 #include "infrastructure/activity/SqliteActivityRepository.hpp"
 #include "ui/activity/ActivityQueryController.hpp"
 #include "ui/activity/UserActivityController.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
-#include <QQmlAbstractUrlInterceptor>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQmlPropertyMap>
@@ -49,62 +49,6 @@ QList<Activity> chain(const QString &app, const QString &title,
                          from.addSecs((i + 1) * 60)});
   }
   return rows;
-}
-
-// The module's qmldir prefers the copies compiled into Chronexa.exe, which a
-// test executable does not have; serve the sources instead.
-class SourceModule : public QQmlAbstractUrlInterceptor {
-public:
-  QUrl intercept(const QUrl &url, DataType) override {
-    const QString prefix = QStringLiteral("/qt/qml/Chronexa/");
-    if (url.scheme() != QStringLiteral("qrc") ||
-        !url.path().startsWith(prefix)) {
-      return url;
-    }
-    const QString file = url.path().mid(prefix.size());
-    // The qmldir is generated; everything else is served from the sources.
-    return QUrl::fromLocalFile(
-        file == QStringLiteral("qmldir")
-            ? QStringLiteral(CHRONEXA_QML_IMPORT_DIR "/Chronexa/qmldir")
-            : QStringLiteral(CHRONEXA_QML_SOURCE_DIR "/") + file);
-  }
-};
-
-QQuickItem *findItem(QQuickItem *root,
-                     const std::function<bool(QQuickItem *)> &matches) {
-  if (root == nullptr) {
-    return nullptr;
-  }
-  if (matches(root)) {
-    return root;
-  }
-  const QList<QQuickItem *> children = root->childItems();
-  for (QQuickItem *child : children) {
-    if (QQuickItem *found = findItem(child, matches)) {
-      return found;
-    }
-  }
-  return nullptr;
-}
-
-QQuickItem *byName(QQuickItem *root, const QString &name) {
-  return findItem(root, [&](QQuickItem *item) {
-    return item->objectName() == name && item->isVisible();
-  });
-}
-
-// A visible button whose label is exactly `text`.
-QQuickItem *button(QQuickItem *root, const QString &text) {
-  return findItem(root, [&](QQuickItem *item) {
-    return item->inherits("QQuickAbstractButton") && item->isVisible() &&
-           item->property("text").toString() == text;
-  });
-}
-
-QQuickItem *textField(QQuickItem *root) {
-  return findItem(root, [](QQuickItem *item) {
-    return item->inherits("QQuickTextField");
-  });
 }
 
 } // namespace
